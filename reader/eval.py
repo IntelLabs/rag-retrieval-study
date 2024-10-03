@@ -15,7 +15,6 @@ import string
 from evaluate import load
 
 from transformers import logging as t_log
-t_log.set_verbosity_error()  # supress bert warning
 
 from transformers import (
     AutoModelForSeq2SeqLM,
@@ -47,7 +46,6 @@ NQ, BIOASQ
 - substring match, following RAGGED
 - f1, following RAGGED
 - rougel f1/precision/recall
-- bertscore f1/precision/recall, following RAGGED
 
 """
 
@@ -562,7 +560,7 @@ def compute_qampari_f1(data, cot=False):
         "qampari_f1_top5_std": np.std(f1_top5)
     }
 
-def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
+def compute_ragged_metrics(normalized_data, MERGE_LIST):
     """
     Original eval for NQ and BIOASQ from RAGGED paper
     """
@@ -582,19 +580,7 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
             # get max entry by f1 score
             return max(scores_for_ground_truths, key=lambda x:x['rougeLsum_f1'])
         else:
-            return max(scores_for_ground_truths, key=lambda x:x["bertscore_f1"])
-
-    def _bertscore(prediction, ground_truth):
-        prediction = convert_textual_numbers_to_numeric(prediction)
-        ground_truth = [convert_textual_numbers_to_numeric(ans) for ans in ground_truth if ans]
-
-        bertscore = load("bertscore")
-        results = bertscore.compute(predictions=[normalize_answer(prediction)], references=[normalize_answer(ground_truth)], lang="en")
-        return {
-            "bertscore_precision" : results["precision"][0],
-            "bertscore_recall" : results["recall"][0],
-            "bertscore_f1" : results["f1"][0]
-        }
+            raise ValueError("Cannot take max over the given scores")
 
     def _rougel_score(prediction, ground_truth):
         # no normalization
@@ -614,7 +600,7 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
         }
         
 
-    def kilt_eval(guess_answer, gold_candidate_answers, NO_BERT):
+    def kilt_eval(guess_answer, gold_candidate_answers):
 
         # returns True if ANY of the gold candidates are in generated answer 
         substring_match = exact_presence(gold_candidate_answers, guess_answer)
@@ -630,13 +616,7 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
             _rougel_score, guess_answer, gold_candidate_answers
         )
         
-        local_bertscore = None
-        if not NO_BERT:
-            local_bertscore = _metric_max_over_ground_truths(
-                _bertscore, guess_answer, gold_candidate_answers
-            )
-        
-        return substring_match, local_f1, local_rougel, local_bertscore
+        return substring_match, local_f1, local_rougel
 
     total_count = 0
     normalized_substring_match = 0
@@ -644,15 +624,8 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
     rougel_f1 = 0
     rougel_p = 0
     rougel_r = 0
-    if not NO_BERT:
-        bertscore_f1=0
-        bertscore_p=0
-        bertscore_r=0
     
-    if NO_BERT:
-        logger.info("Running kilt evaluation without BERT... ")
-    else: 
-        logger.info("Running kilt evaluation with BERT... ")
+    logger.info("Running kilt evaluation...")
 
     for reader_output_info in tqdm(normalized_data):
         total_count+=1
@@ -666,10 +639,9 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
             gold_answer_list = [" ".join(gold_answer_list)]
 
         substring_match, local_f1, \
-            local_rougel, local_bertscore = kilt_eval(
+            local_rougel = kilt_eval(
                   guess_answer, 
                   gold_answer_list,
-                  NO_BERT
                )
 
         normalized_substring_match += substring_match
@@ -678,22 +650,12 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
         rougel_p += local_rougel["rougeLsum_p"]
         rougel_r += local_rougel["rougeLsum_r"]
 
-        if not NO_BERT:
-            bertscore_f1 += local_bertscore["bertscore_f1"]
-            bertscore_p += local_bertscore["bertscore_precision"]
-            bertscore_r += local_bertscore["bertscore_recall"]
-        
     if total_count > 0:
         normalized_substring_match /= total_count
         normalized_f1 /= total_count
         rougel_f1 /= total_count
         rougel_p /= total_count
         rougel_r /= total_count
-
-        if not NO_BERT:
-            bertscore_f1 /= total_count
-            bertscore_p /= total_count
-            bertscore_r /= total_count
 
     method_metrics = {
         "ragged_substring_match":round(normalized_substring_match, 4),
@@ -703,10 +665,6 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
         "ragged_rougel_r": round(rougel_r, 4)
 
     }
-    if not NO_BERT:
-        method_metrics["bertscore_f1"] = round(bertscore_f1, 4)
-        method_metrics["bertscore_p"] = round(bertscore_p, 4)
-        method_metrics["bertscore_r"] = round(bertscore_r, 4)
 
     logger.info(f"total questions - dev: {total_count}/{len(gold_data)}")
     logger.info("Reader metrics : ", method_metrics)
@@ -753,7 +711,7 @@ def main(args):
         qampari = True
     
     elif 'nq' in args.f or 'bioasq' in args.f:
-        result.update(compute_ragged_metrics(normalized_data, args.no_bert, args.merge_list_answers))
+        result.update(compute_ragged_metrics(normalized_data, args.merge_list_answers))
     
     if args.citations: 
         result.update(compute_autoais(
@@ -773,8 +731,6 @@ if __name__ == "__main__":
     parser.add_argument("--f", type=str, required=True, help="Name of reader output file to evaluate in $RESULTS_PATH/reader. Should have field `question`, `generated_output`, (ROUGE) `answer`, \
                         (accuracy) `qa_pairs`, (AIS) `docs`")
     
-    parser.add_argument("--no_bert", action="store_true", help="Add tag to not run bert during nq and bioasq eval (it can be time consuming)")  # nq and bioasq
-    parser.add_argument("--merge_list_answers", action="store_true", help="for bioasq, merge short answers when answer_type==list")
 
     parser.add_argument("--citations", action="store_true", help="Evaluation with citation")
     parser.add_argument("--at_most_citations", type=int, default=3, help="At most take this many documents (mostly for precision)")

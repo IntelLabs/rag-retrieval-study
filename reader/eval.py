@@ -33,7 +33,6 @@ ASQA
 - string exact match (str_em), following ALCE
 - string hit (str_hit), following ALCE
 - rougeLsum, following ALCE
-- QA based accuracy, following ALCE
 
 QAMPARI
 - precision, following ALCE
@@ -42,11 +41,10 @@ QAMPARI
 - f1, following ALCE
 - f1 top 5, following ALCE
 
-NQ, BIOASQ
+NQ
 - substring match, following RAGGED
 - f1, following RAGGED
 - rougel f1/precision/recall
-
 """
 
 
@@ -61,7 +59,6 @@ from file_utils import load_json, save_json
 
 
 
-QA_MODEL="gaotianyu1350/roberta-large-squad"
 AUTOAIS_MODEL="google/t5_xxl_true_nli_mixture"
 
 global autoais_model, autoais_tokenizer
@@ -235,55 +232,6 @@ def compute_len(data):
         res += len(item['generated_output'].split())
         cntr += 1
     return res / cntr
-
-
-def compute_qa(data):
-    """Compute QA-based accuracy.
-    Args:
-        data: requires filed `qa_pairs/short_answers` and `generated_output`
-    Returns:
-        QA metrics (QA-EM, QA-F1, QA-Hit)
-    """
-
-    if 'qa_pairs' not in data[0] or data[0]['qa_pairs'] is None:
-        logger.warn("Warning: no QA pairs found in data")
-        return {
-            'QA-EM': 0,
-            'QA-F1': 0,
-            'QA-Hit': 0,
-        }
-
-    # Load model
-    logger.info("Loading the RoBERTa-large SQuAD model for QA-based accuracy...")
-    qa_pipeline = pipeline("question-answering", model=QA_MODEL, device=0)
-    logger.info("Done")
-
-    # Get prediction
-    logger.info("Computing the QA-based accuracy...")
-    em, f1, bins = [], [], []
-    for item in tqdm(data):
-        question = [qa_pair['question'] for qa_pair in item['qa_pairs']]
-        context = item['generated_output'] if len(item['generated_output']) > 0 else " "
-        results = qa_pipeline(question=question, context=context, handle_impossible_answer=True)
-        loc_counter, loc_em, loc_f1 = 0, 0, 0
-
-        for idx, res in enumerate(results):
-            answers = item["qa_pairs"][idx]["short_answers"]
-            prediction = res["answer"]
-
-            loc_em += max([compute_exact(a, prediction) for a in answers])
-            loc_f1 += max([compute_f1(a, prediction) for a in answers])
-            loc_counter += 1
-
-        em.append(loc_em / loc_counter)
-        f1.append(loc_f1 / loc_counter)
-        bins.append(loc_em == loc_counter)
-
-    return {
-        'QA-EM': 100 * np.mean(em),
-        'QA-F1': 100 * np.mean(f1),
-        'QA-Hit': 100 * np.mean(bins)
-    }
 
 
 def _run_nli_autoais(passage, claim):
@@ -704,7 +652,6 @@ def main(args):
         result['str_em_mean'], result['str_em_std'], \
             result['str_hit_mean'], result['str_hit_std'] = compute_str_em(normalized_data)
         result['rougeLsum'] = compute_rouge(normalized_data)
-        result.update(compute_qa(normalized_data))  # QA based accuracy with RoBERTa-large SQuAD
 
     elif 'qampari' in args.f:
         result.update(compute_qampari_f1(normalized_data, cot=args.cot))

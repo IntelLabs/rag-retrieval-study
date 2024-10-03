@@ -35,7 +35,6 @@ ASQA
 - string hit (str_hit), following ALCE
 - rougeLsum, following ALCE
 - QA based accuracy, following ALCE
-- mauve score, following ALCE
 
 QAMPARI
 - precision, following ALCE
@@ -287,42 +286,6 @@ def compute_qa(data):
         'QA-F1': 100 * np.mean(f1),
         'QA-Hit': 100 * np.mean(bins)
     }
-
-
-def compute_mauve(data):
-    """
-    Compute Mauve: "a measure of the gap between neural text and human text. It is computed using the Kullback–Leibler (KL) divergences between 
-    the two distributions of text in a quantized embedding space of a large language model. MAUVE can identify differences in generation fluency."
-
-    https://arxiv.org/abs/2102.01454
-
-    Args:
-        data: requires 'question', 'answer' and 'generated_output' fields
-    Returns: 
-        mauve score between human data and generated output
-    """
-
-    logger.info("Computing MAUVE...")
-    human_data = []
-    model_data = []
-    for item in data:
-        # Remove ending punctuations
-        # Remove any new lines
-        # Truncate by 100 words
-        human_data.append(' '.join((item['question'] + " " + item['answer'].strip()).split()[:100]).rstrip(string.punctuation))
-        model_data.append(' '.join((item['question'] + " " + item['generated_output'].strip()).split()[:100]).rstrip(string.punctuation))
-
-    import mauve
-    out = mauve.compute_mauve(
-        p_text=human_data,
-        q_text=model_data,
-        device_id=0,
-        max_text_length=512,
-        verbose=True,
-        batch_size=8,
-        featurize_model_name="gpt2-large"
-    )
-    return out.mauve * 100
 
 
 def _run_nli_autoais(passage, claim):
@@ -784,7 +747,6 @@ def main(args):
             result['str_hit_mean'], result['str_hit_std'] = compute_str_em(normalized_data)
         result['rougeLsum'] = compute_rouge(normalized_data)
         result.update(compute_qa(normalized_data))  # QA based accuracy with RoBERTa-large SQuAD
-        result['mauve'] = compute_mauve(normalized_data)
 
     elif 'qampari' in args.f:
         result.update(compute_qampari_f1(normalized_data, cot=args.cot))

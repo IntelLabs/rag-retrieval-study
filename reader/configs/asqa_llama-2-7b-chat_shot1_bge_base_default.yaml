@@ -1,0 +1,9 @@
+---
+prompt_file: asqa_cite.json
+eval_file: asqa_retrieval-bge-base-dense.json
+shot: 1
+dataset_name: asqa
+model: meta-llama/Llama-2-7b-chat-hf
+temperature: 1.0
+top_p: 0.95
+max_length: 4096

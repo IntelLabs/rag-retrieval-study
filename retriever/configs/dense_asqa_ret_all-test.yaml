@@ -1,0 +1,11 @@
+---
+k: all
+retriever: dense
+query_file: asqa_eval-test.json
+query_dataset: asqa
+doc_dataset: dpr_wiki
+output_file: asqa_retrieval-bge-base-all-test.json
+embed_file: dpr_wiki-bge1.5-base.fvecs
+embed_model_name: BAAI/bge-base-en-v1.5
+embed_model_type: 'st'
+noise_experiment: True

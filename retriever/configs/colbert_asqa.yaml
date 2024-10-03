@@ -1,0 +1,7 @@
+---
+k: 100
+retriever: colbert
+query_file: asqa_eval.json
+query_dataset: asqa
+doc_dataset: dpr_wiki
+output_file: asqa_eval-colbert.json

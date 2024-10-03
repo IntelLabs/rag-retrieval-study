@@ -1,0 +1,17 @@
+---
+k: 10
+num_threads: 144
+text_key: text
+retriever: dense
+query_file: asqa_eval.json
+query_dataset: asqa
+doc_dataset: dpr_wiki
+output_file: asqa_retrieval_ann-recall0.7_bge-base-dense.json
+embed_file: dpr_wiki-bge1.5-base.fvecs
+embed_model_name: BAAI/bge-base-en-v1.5
+embed_model_type: 'st'
+index_fn: pysvs.Vamana
+dist_type: pysvs.DistanceType.MIP
+index_kwargs: {'vamana_build_params': {'alpha': 0.95, 'graph_max_degree': 128, 'window_size': 256, 'max_candidate_pool_size': 512, 'prune_to': 512}}
+#search_win_size: 1024
+calib_kwargs: {'calib_prefix': asqa_bge-base-dense, 'num_neighbors': 10, 'target_recall': 0.7}

@@ -1,0 +1,9 @@
+---
+prompt_file: asqa_cite.json
+shot: 2
+ndoc: 10
+dataset_name: asqa
+model: mistralai/Mistral-7B-Instruct-v0.3
+temperature: 1.0
+top_p: 0.95
+max_length: 32768

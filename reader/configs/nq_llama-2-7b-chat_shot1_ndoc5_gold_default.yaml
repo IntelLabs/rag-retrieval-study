@@ -1,0 +1,10 @@
+---
+prompt_file: nq_cite.json
+eval_file: nq_gold.json
+shot: 1
+ndoc: 5
+dataset_name: nq
+model: meta-llama/Llama-2-7b-chat-hf
+temperature: 1.0
+top_p: 0.95
+max_length: 4096

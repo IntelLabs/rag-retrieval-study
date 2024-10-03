@@ -1,0 +1,10 @@
+---
+prompt_file: qampari_closedbook.json
+eval_file: qampari_eval_gold.json
+shot: 2
+ndoc: 0
+dataset_name: qampari
+model: mistralai/Mistral-7B-Instruct-v0.3
+temperature: 1.0
+top_p: 0.95
+max_length: 32768

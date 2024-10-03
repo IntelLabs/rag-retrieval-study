@@ -1,0 +1,13 @@
+---
+k: all
+num_threads: 256
+text_key: text
+retriever: dense
+query_file: nq_qa.json
+query_dataset: nq
+doc_dataset: kilt_wikipedia
+output_file: nq_retrieval-bge-base-all.json
+embed_file: kilt_wikipedia-bge1.5-base.fvecs
+embed_model_name: BAAI/bge-base-en-v1.5
+embed_model_type: 'st'
+noise_experiment: True

@@ -1,0 +1,10 @@
+---
+prompt_file: nq_cite.json
+eval_file: nq_retrieval-colbert.json
+shot: 2
+dataset_name: nq
+tag: cite
+model: mistralai/Mistral-7B-Instruct-v0.3
+temperature: 1.0
+top_p: 0.95
+max_length: 32768

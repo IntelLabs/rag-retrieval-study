@@ -1,0 +1,32 @@
+{
+    "instruction": "Instruction: Write an accurate, engaging, and concise answer for the given question. Use an unbiased and journalistic tone. ",
+    "demo_sep": "\n\n\n",
+    "demo_prompt": "{INST}\n\nQuestion: {Q}\n\n{D}\nAnswer: {A}",
+    "doc_prompt": "Document [{ID}](Title: {T}): {P}\n",
+    "demos": [
+        {
+            "question": "who had the most wins in the nfl",
+            "answer": "Tom Brady holds the records for most wins in the NFL with 237.",
+            "docs": [
+                {
+                    "title": "List of National Football League career quarterback wins leaders",
+                    "text": "Active quarterback Tom Brady holds the records for most wins with 237, most regular season wins with 207, and most postseason wins with 30, as of the Super Bowl round of the 2018 playoffs. Having played his entire career with the New England Patriots, each of Brady's win records also apply to wins with a single team.\n"
+                }
+            ]
+        },
+        {
+            "question": "god's not dead a light in the darkness release date",
+            "answer": "The movie God's Not Dead: A Light in Darkness was released on March 30 , 2018 in both Canada and the United States.",
+            "docs": [
+                {
+                    "title": "God's Not Dead: A Light in Darkness",
+                    "text": "Principal photography was completed in Little Rock, Arkansas in December 2017. It was released in the United States on March 30, 2018. The film made less in its entire theatrical run ($7.4 million) than each of the previous two grossed in their respective domestic opening weekends ($9.7 million and $7.6 million).\n"
+                },
+                {
+                    "title": "God's Not Dead: A Light in Darkness",
+                    "text": "In the United States and Canada, \"God's Not Dead: A Light in Darkness\" was released on March 30, 2018, alongside \"Acrimony\" and \"Ready Player One\", and was projected to gross $4–6 million from 1,685 theaters in its opening weekend. It ended up debuting to just $2.6 million, finishing 12th at the box office and marking the lowest opening of the series. \"Deadline Hollywood\" noted the film suffered from being the third film of a trilogy and also said religious audiences saw the film as \"a cash grab and not a movie promoting a Christian message anymore\", and were more inclined to go to other faith-based films in theaters like \"I Can Only Imagine\" and \"Paul, Apostle of Christ\". It fell 58% in its second weekend to $1.1 million, finishing 17th. By the end of its North American run the film grossed a total of $5.5 million, less than other two films grossed simply in their opening weekends ($9.7 million and $7.6 million, respectively).\n"
+                }
+            ]
+        }
+    ]
+}

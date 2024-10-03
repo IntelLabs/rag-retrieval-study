@@ -1,0 +1,12 @@
+---
+k: all
+retriever: dense
+query_file: qampari_eval.json
+query_dataset: qampari
+doc_dataset: dpr_wiki
+output_file: qampari_retrieval-bge-base-all.json
+embed_file: dpr_wiki-bge1.5-base.fvecs
+embed_model_name: BAAI/bge-base-en-v1.5
+embed_model_type: 'st'
+num_threads: 112
+noise_experiment: True

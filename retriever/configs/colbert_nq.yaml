@@ -1,0 +1,7 @@
+---
+k: 100
+retriever: colbert
+query_file: nq_eval.json
+query_dataset: nq
+doc_dataset: kilt_wikipedia
+output_file: nq_eval-colbert.json

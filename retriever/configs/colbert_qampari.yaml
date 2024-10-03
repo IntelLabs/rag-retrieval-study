@@ -1,0 +1,7 @@
+---
+k: 100
+retriever: colbert
+query_file: qampari_eval.json
+query_dataset: qampari
+doc_dataset: dpr_wiki
+output_file: qampari_eval-colbert.json

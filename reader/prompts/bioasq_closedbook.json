@@ -1,0 +1,8 @@
+{
+    "instruction": "Instruction: Write an accurate, engaging, and concise answer for the given question. Use an unbiased and journalistic tone. ",
+    "demo_sep": "\n\n\n",
+    "demo_prompt": "{INST}\n\nQuestion: {Q}\n\n{D}\nAnswer: {A}",
+    "doc_prompt": "Document [{ID}](Title: {T}): {P}\n",
+    "demos": [
+    ]
+}

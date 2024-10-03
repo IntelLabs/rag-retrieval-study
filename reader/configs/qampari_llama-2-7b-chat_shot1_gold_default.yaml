@@ -1,0 +1,10 @@
+---
+prompt_file: qampari_cite.json
+eval_file: qampari_eval_gold.json
+shot: 1
+ndoc: 5
+dataset_name: qampari
+model: meta-llama/Llama-2-7b-chat-hf
+temperature: 1.0
+top_p: 0.95
+max_length: 4096

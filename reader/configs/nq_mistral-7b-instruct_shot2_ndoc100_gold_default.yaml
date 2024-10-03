@@ -1,0 +1,10 @@
+---
+prompt_file: nq_cite.json
+eval_file: nq_gold.json
+shot: 2
+ndoc: 100
+dataset_name: nq
+model: mistralai/Mistral-7B-Instruct-v0.3
+temperature: 1.0
+top_p: 0.95
+max_length: 32768

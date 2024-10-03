@@ -12,7 +12,6 @@ from rouge_score import rouge_scorer, scoring
 from tqdm import tqdm
 
 import string
-from evaluate import load
 
 from transformers import logging as t_log
 

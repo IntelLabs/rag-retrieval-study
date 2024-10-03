@@ -435,7 +435,7 @@ def compute_autoais(data,
     }
 
 
-def compute_qampari_f1(data, cot=False):
+def compute_qampari_f1(data):
     """
     Compute qampari-specific f1: splits generation by comma and calculates precision and recall based on this and list of gold entities,
     returns average over inputs
@@ -443,7 +443,6 @@ def compute_qampari_f1(data, cot=False):
      Args:
         data: requires field `generated_output` and `answers`
               - answers: comma separated list of entities 
-        cot: whether answers were generated with cot prompting
     """
 
     prec = []
@@ -454,13 +453,7 @@ def compute_qampari_f1(data, cot=False):
 
     num_preds = []
     for item in data:
-        if cot:
-            if ":" in item['generated_output']:
-                o = ':'.join(item['generated_output'].split(":")[1:]) # try to separate the COT part and the answer list part.
-            else:
-                o = ""
-        else:
-            o = item['generated_output']
+        o = item['generated_output']
         
         # remove leading/trailing space, period or comma -> split by comma and normalize
         preds = [normalize_answer(x.strip()) for x in o.rstrip().rstrip(".").rstrip(",").split(",")]
@@ -650,7 +643,7 @@ def main(args):
         result['rougeLsum'] = compute_rouge(normalized_data)
 
     elif 'qampari' in args.f:
-        result.update(compute_qampari_f1(normalized_data, cot=args.cot))
+        result.update(compute_qampari_f1(normalized_data))
         qampari = True
     
     elif 'nq' in args.f:
@@ -685,10 +678,6 @@ if __name__ == "__main__":
     parser.add_argument("--noise_first", action="store_true", help="In the prompt, if random noisy documents should precede retrieved or gold passages")
     parser.add_argument("--noise_file", type=str, default=None, help="File from which noisy documents were added")
 
-
-
-    # QAMPARI
-    parser.add_argument("--cot", action="store_true", help="For QAMPARI, try to find colon and separate the COT and answer listing")
 
     args = parser.parse_args()
     main(args)

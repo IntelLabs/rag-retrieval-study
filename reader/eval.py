@@ -508,7 +508,7 @@ def compute_qampari_f1(data, cot=False):
         "qampari_f1_top5_std": np.std(f1_top5)
     }
 
-def compute_ragged_metrics(normalized_data, MERGE_LIST):
+def compute_ragged_metrics(normalized_data):
     """
     Original eval for NQ and BIOASQ from RAGGED paper
     """
@@ -582,10 +582,6 @@ def compute_ragged_metrics(normalized_data, MERGE_LIST):
         gold_data = reader_output_info["output"]
         gold_answer_list = [x for x in gold_data["answer_set"]]  # considering only the short answers
 
-        # merge gold answer list if bioasq specifies answer_type==list
-        if MERGE_LIST and "question_type" in gold_data.keys() and gold_data["question_type"] == "list":
-            gold_answer_list = [" ".join(gold_answer_list)]
-
         substring_match, local_f1, \
             local_rougel = kilt_eval(
                   guess_answer, 
@@ -657,8 +653,8 @@ def main(args):
         result.update(compute_qampari_f1(normalized_data, cot=args.cot))
         qampari = True
     
-    elif 'nq' in args.f or 'bioasq' in args.f:
-        result.update(compute_ragged_metrics(normalized_data, args.merge_list_answers))
+    elif 'nq' in args.f:
+        result.update(compute_ragged_metrics(normalized_data))
     
     if args.citations: 
         result.update(compute_autoais(

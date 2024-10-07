@@ -12,10 +12,8 @@ from rouge_score import rouge_scorer, scoring
 from tqdm import tqdm
 
 import string
-from evaluate import load
 
 from transformers import logging as t_log
-t_log.set_verbosity_error()  # supress bert warning
 
 from transformers import (
     AutoModelForSeq2SeqLM,
@@ -34,8 +32,6 @@ ASQA
 - string exact match (str_em), following ALCE
 - string hit (str_hit), following ALCE
 - rougeLsum, following ALCE
-- QA based accuracy, following ALCE
-- mauve score, following ALCE
 
 QAMPARI
 - precision, following ALCE
@@ -44,12 +40,10 @@ QAMPARI
 - f1, following ALCE
 - f1 top 5, following ALCE
 
-NQ, BIOASQ
+NQ
 - substring match, following RAGGED
 - f1, following RAGGED
 - rougel f1/precision/recall
-- bertscore f1/precision/recall, following RAGGED
-
 """
 
 
@@ -64,7 +58,6 @@ from file_utils import load_json, save_json
 
 
 
-QA_MODEL="gaotianyu1350/roberta-large-squad"
 AUTOAIS_MODEL="google/t5_xxl_true_nli_mixture"
 
 global autoais_model, autoais_tokenizer
@@ -234,55 +227,6 @@ def compute_len(data):
         res += len(item['generated_output'].split())
         cntr += 1
     return res / cntr
-
-
-def compute_qa(data):
-    """Compute QA-based accuracy.
-    Args:
-        data: requires filed `qa_pairs/short_answers` and `generated_output`
-    Returns:
-        QA metrics (QA-EM, QA-F1, QA-Hit)
-    """
-
-    if 'qa_pairs' not in data[0] or data[0]['qa_pairs'] is None:
-        logger.warn("Warning: no QA pairs found in data")
-        return {
-            'QA-EM': 0,
-            'QA-F1': 0,
-            'QA-Hit': 0,
-        }
-
-    # Load model
-    logger.info("Loading the RoBERTa-large SQuAD model for QA-based accuracy...")
-    qa_pipeline = pipeline("question-answering", model=QA_MODEL, device=0)
-    logger.info("Done")
-
-    # Get prediction
-    logger.info("Computing the QA-based accuracy...")
-    em, f1, bins = [], [], []
-    for item in tqdm(data):
-        question = [qa_pair['question'] for qa_pair in item['qa_pairs']]
-        context = item['generated_output'] if len(item['generated_output']) > 0 else " "
-        results = qa_pipeline(question=question, context=context, handle_impossible_answer=True)
-        loc_counter, loc_em, loc_f1 = 0, 0, 0
-
-        for idx, res in enumerate(results):
-            answers = item["qa_pairs"][idx]["short_answers"]
-            prediction = res["answer"]
-
-            loc_em += max([compute_exact(a, prediction) for a in answers])
-            loc_f1 += max([compute_f1(a, prediction) for a in answers])
-            loc_counter += 1
-
-        em.append(100 * loc_em / loc_counter)
-        f1.append(100 * loc_f1 / loc_counter)
-        bins.append(int(loc_em == loc_counter))
-
-    return {
-        'QA-EM': em,
-        'QA-F1': f1,
-        'QA-Hit': bins
-    }
 
 
 def _run_nli_autoais(passage, claim):
@@ -484,7 +428,7 @@ def compute_autoais(data,
     }
 
 
-def compute_qampari_f1(data, cot=False):
+def compute_qampari_f1(data):
     """
     Compute qampari-specific f1: splits generation by comma and calculates precision and recall based on this and list of gold entities,
     returns average over inputs
@@ -503,13 +447,7 @@ def compute_qampari_f1(data, cot=False):
 
     num_preds = []
     for item in data:
-        if cot:
-            if ":" in item['generated_output']:
-                o = ':'.join(item['generated_output'].split(":")[1:]) # try to separate the COT part and the answer list part.
-            else:
-                o = ""
-        else:
-            o = item['generated_output']
+        o = item['generated_output']
         
         # remove leading/trailing space, period or comma -> split by comma and normalize
         preds = [normalize_answer(x.strip()) for x in o.rstrip().rstrip(".").rstrip(",").split(",")]
@@ -552,7 +490,7 @@ def compute_qampari_f1(data, cot=False):
         "qampari_f1_top5": f1_top5,
     }
 
-def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
+def compute_ragged_metrics(normalized_data):
     """
     Original eval for NQ and BIOASQ from RAGGED paper
     """
@@ -572,19 +510,7 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
             # get max entry by f1 score
             return max(scores_for_ground_truths, key=lambda x:x['rougeLsum_f1'])
         else:
-            return max(scores_for_ground_truths, key=lambda x:x["bertscore_f1"])
-
-    def _bertscore(prediction, ground_truth):
-        prediction = convert_textual_numbers_to_numeric(prediction)
-        ground_truth = [convert_textual_numbers_to_numeric(ans) for ans in ground_truth if ans]
-
-        bertscore = load("bertscore")
-        results = bertscore.compute(predictions=[normalize_answer(prediction)], references=[normalize_answer(ground_truth)], lang="en")
-        return {
-            "bertscore_precision" : results["precision"][0],
-            "bertscore_recall" : results["recall"][0],
-            "bertscore_f1" : results["f1"][0]
-        }
+            raise ValueError("Cannot take max over the given scores")
 
     def _rougel_score(prediction, ground_truth):
         # no normalization
@@ -604,7 +530,7 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
         }
         
 
-    def kilt_eval(guess_answer, gold_candidate_answers, NO_BERT):
+    def kilt_eval(guess_answer, gold_candidate_answers):
 
         # returns True if ANY of the gold candidates are in generated answer 
         substring_match = exact_presence(gold_candidate_answers, guess_answer)
@@ -620,13 +546,7 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
             _rougel_score, guess_answer, gold_candidate_answers
         )
         
-        local_bertscore = None
-        if not NO_BERT:
-            local_bertscore = _metric_max_over_ground_truths(
-                _bertscore, guess_answer, gold_candidate_answers
-            )
-        
-        return substring_match, local_f1, local_rougel, local_bertscore
+        return substring_match, local_f1, local_rougel
 
     total_count = 0
     normalized_substring_match = 0
@@ -634,11 +554,6 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
     rougel_f1 = 0
     rougel_p = 0
     rougel_r = 0
-    if not NO_BERT:
-        all_bertscore_f1 = []
-        all_bertscore_p = []
-        all_bertscore_r = []
-
     all_norm_substr = []
     all_norm_f1 = []
     all_rougel_f1 = []
@@ -646,10 +561,7 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
     all_rougel_r = []
 
     
-    if NO_BERT:
-        logger.info("Running kilt evaluation without BERT... ")
-    else: 
-        logger.info("Running kilt evaluation with BERT... ")
+    logger.info("Running kilt evaluation...")
 
     for reader_output_info in tqdm(normalized_data):
         total_count+=1
@@ -658,15 +570,10 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
         gold_data = reader_output_info["output"]
         gold_answer_list = [x for x in gold_data["answer_set"]]  # considering only the short answers
 
-        # merge gold answer list if bioasq specifies answer_type==list
-        if MERGE_LIST and "question_type" in gold_data.keys() and gold_data["question_type"] == "list":
-            gold_answer_list = [" ".join(gold_answer_list)]
-
         substring_match, local_f1, \
-            local_rougel, local_bertscore = kilt_eval(
+            local_rougel = kilt_eval(
                   guess_answer, 
                   gold_answer_list,
-                  NO_BERT
                )
 
         all_norm_substr.append(int(substring_match))
@@ -675,21 +582,12 @@ def compute_ragged_metrics(normalized_data, NO_BERT, MERGE_LIST):
         all_rougel_p.append(local_rougel["rougeLsum_p"])
         all_rougel_r.append(local_rougel["rougeLsum_r"])
 
-        if not NO_BERT:
-            all_bertscore_f1.append(local_bertscore["bertscore_f1"])
-            all_bertscore_p.append(local_bertscore["bertscore_precision"])
-            all_bertscore_r.append(local_bertscore["bertscore_recall"])
-        
     method_metrics = {'ragged_substring_match': all_norm_substr,
-                  'ragged_f1': all_norm_f1,
-                  'ragged_rougel_f1': all_rougel_f1,
-                  'ragged_rougel_p': all_rougel_p,
-                  'ragged_rougel_r': all_rougel_r}
+                      'ragged_f1': all_norm_f1,
+                      'ragged_rougel_f1': all_rougel_f1,
+                      'ragged_rougel_p': all_rougel_p,
+                      'ragged_rougel_r': all_rougel_r}
 
-    if not NO_BERT:
-        method_metrics["bertscore_f1"] = all_bertscore_f1
-        method_metrics["bertscore_p"] = all_bertscore_p
-        method_metrics["bertscore_r"] = all_bertscore_r
 
     logger.info(f"total questions - dev: {total_count}/{len(gold_data)}")
     logger.info("Reader metrics : ", method_metrics)
@@ -728,16 +626,13 @@ def main(args):
     if "asqa" in args.f:
         result['str_em'], result['str_hit'] = compute_str_em(normalized_data)
         result['rougeLsum'] = compute_rouge(normalized_data)
-        result.update(compute_qa(normalized_data))  # QA based accuracy with RoBERTa-large SQuAD
-        # Removing mauve because it is a distributional metric
-        #result['mauve'] = compute_mauve(normalized_data)
 
     elif 'qampari' in args.f:
-        result.update(compute_qampari_f1(normalized_data, cot=args.cot))
+        result.update(compute_qampari_f1(normalized_data))
         qampari = True
     
-    elif 'nq' in args.f or 'bioasq' in args.f:
-        result.update(compute_ragged_metrics(normalized_data, args.no_bert, args.merge_list_answers))
+    elif 'nq' in args.f:
+        result.update(compute_ragged_metrics(normalized_data))
     
     if args.citations: 
         result.update(compute_autoais(
@@ -757,8 +652,6 @@ if __name__ == "__main__":
     parser.add_argument("--f", type=str, required=True, help="Name of reader output file to evaluate in $RESULTS_PATH/reader. Should have field `question`, `generated_output`, (ROUGE) `answer`, \
                         (accuracy) `qa_pairs`, (AIS) `docs`")
     
-    parser.add_argument("--no_bert", action="store_true", help="Add tag to not run bert during nq and bioasq eval (it can be time consuming)")  # nq and bioasq
-    parser.add_argument("--merge_list_answers", action="store_true", help="for bioasq, merge short answers when answer_type==list")
 
     parser.add_argument("--citations", action="store_true", help="Evaluation with citation")
     parser.add_argument("--at_most_citations", type=int, default=3, help="At most take this many documents (mostly for precision)")
@@ -770,9 +663,6 @@ if __name__ == "__main__":
     parser.add_argument("--noise_first", action="store_true", help="In the prompt, if random noisy documents should precede retrieved or gold passages")
     parser.add_argument("--noise_file", type=str, default=None, help="File from which noisy documents were added")
 
-
-    # QAMPARI
-    parser.add_argument("--cot", action="store_true", help="For QAMPARI, try to find colon and separate the COT and answer listing")
 
     args = parser.parse_args()
     main(args)

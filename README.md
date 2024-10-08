@@ -63,25 +63,43 @@ To evaluate retrieval results use the following command:
 python retriever/eval.py --eval_file {eval_filename} --not_par_level
 ```
 
-Use the --not_par_level flag for asqa, where the gold metadata is not separated into document-level and paragraph-level ids.
+Use the ```--not_par_level``` flag for asqa, where the gold metadata is not separated into document-level and paragraph-level ids.
 
 To generate 10 noisy docs in each percentile of neighbors for each query, add the ```--noise_experiment``` tag. Note that this is only implemented for dense retrieval and has only been tested for asqa. 
 
 
-### Noise experiments
-TODO: add overall statement about noise experiments and how to run them. specifics below
-TODO: add info about retrieving ALL neighbors
-TODO: add info about noise percentile bins in `ret_utils.py` and `run.py`
-TODO: add info about evaluating closer neighbors with `preprocessing/sample_retrieved_neighbors.py` and `run.py`
-
-
-## Reader
+### Reader
 
 There are existing config files in reader/configs or you can create your own. You may also override arguments in the config file with command line arguments or choose not to use config files and specify everything
 via command line arguments. 
 
 ```bash
 python reader/run.py --config {config_name}
+```
+
+### Noise experiments
+The process for performing experiments with adding noisy documents to gold and retrieved documents in the interest of replicating performance gains observed in [The Power of Noise](https://arxiv.org/abs/2401.14887) is outlined here. 
+
+## Noise percentile experiments
+Using the ```--noise_experiment``` tag in the retrieval step described in [Retriever evaluation](#retriever-evaluation) results in 10 noisy docs in each percentile of neighbors for each query. This is obtained by retrieving all documents for the query, resulting in an ordered list from most similar to least similar to the query. This is divided into ten equal bins. Random documents from each bin are exported to a noise file. This is implemented in `retriever/ret_utils.py`. For each resulting noise file, run:
+
+```bash
+python3 reader/run.py --config {config_name} --noise_file {noise_name}
+```
+By default, the noisy documents will be added to the prompt after the retrieved or gold documents. To switch this order, use the ```--noise_first``` flag. You can switch between adding noise to the gold and retrieved documents by changing the `config_name`. 
+
+
+## First 100 neighbors experiments
+To perform experiments with adding nearer neighbors to the gold and retrieved results run default retrieval to obtain an `eval_file`, then create new noise files for retrieved results 5-10 and 95-100 (for each query) by running: 
+
+```bash
+python3 preprocessing/sample_retrieved_neighbors.py --f {eval_file} --d {dataset_name}
+```
+
+Note that gold documents are omitted from this set. You can then run experiments with the resulting noise files (as outlined above): 
+
+```bash
+python3 reader/run.py --config {config_name} --noise_file {noise_name}
 ```
 
 ### Reader evaluation

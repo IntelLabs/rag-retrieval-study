@@ -11,7 +11,7 @@ def save_json(data, filename, logger=None):
 def load_json(filename, logger=None, sort_by_id = False):
     if logger:
         logger.info(f'loading from {filename}')
-    assert filename.endswith("json") or filename.endswith("json.score"), "file provided to load_json does not end with .json extension. Please recheck!"
+    assert filename.endswith("json") or filename.endswith(".score"), "file provided to load_json does not end with .json extension. Please recheck!"
     data = json.load(open(filename))
     if sort_by_id:
         for d in data:

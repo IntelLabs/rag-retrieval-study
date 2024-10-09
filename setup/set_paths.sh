@@ -16,9 +16,6 @@ echo "Environment variable COLBERT_MODEL_PATH set to:" $COLBERT_MODEL_PATH
 
 # Now also set the pythonpath to search for the correct module files
 current_path=$(pwd)
-while [[ ${current_path: -4} != "alce" ]]; do
-    current_path=$(dirname $current_path)
-done
 export PYTHONPATH=$current_path
 
 echo "PYTHONPATH set to: " $PYTHONPATH

@@ -80,54 +80,53 @@ def save_noise(query_data, queries, k, k_neighbors, corpus, dist_neighbors, doc_
     """
 
     logger.info('Saving text and titles for each neighbor')
-    
+
     import random
     random.seed(42)
 
-    # for i in range(10): # for each percentile
-    i = 9
-    logger.info(f"Generating {(i+1)*10}th percentile random noise")
-    start_index = int(i * 0.01 * k)
-    end_index = int((i + 1) * 0.01 * k)
-    # for qi, q in enumerate(tqdm(queries)):
-    for qi, q in enumerate(queries):
-        # get gold ids for query
-        par_gold = False
-        try:
-            gold_ids = query_data[qi]['output']['id_set']
-        except:
-            par_gold = True
-            gold_ids = query_data[qi]['output']['page_par_id_set']
-        # get neighbor info for this percentile only
-        neighbor_inds = k_neighbors[qi, :]
-        neighbor_inds = neighbor_inds[start_index:end_index]
-        neighbor_data = corpus[neighbor_inds]
-        # Get associated text
-        n_text = neighbor_data[text_key]
-        # Get document & passage ID. Also get associated document title.
-        n_id = neighbor_data["id"]
+    for i in range(10): # for each percentile
+        logger.info(f"Generating {(i+1)*10}th percentile random noise")
+        start_index = int(i * 0.01 * k)
+        end_index = int((i + 1) * 0.01 * k)
+        # for qi, q in enumerate(tqdm(queries)):
+        for qi, q in enumerate(queries):
+            # get gold ids for query
+            par_gold = False
+            try:
+                gold_ids = query_data[qi]['output']['id_set']
+            except:
+                par_gold = True
+                gold_ids = query_data[qi]['output']['page_par_id_set']
+            # get neighbor info for this percentile only
+            neighbor_inds = k_neighbors[qi, :]
+            neighbor_inds = neighbor_inds[start_index:end_index]
+            neighbor_data = corpus[neighbor_inds]
+            # Get associated text
+            n_text = neighbor_data[text_key]
+            # Get document & passage ID. Also get associated document title.
+            n_id = neighbor_data["id"]
 
-        ret = []  # list of doc dicts
-        choices = []  # track so no duplicates and no golds
-        while len(choices) < 100:
-            c = random.randrange(len(n_id))
-            og_index = c + start_index
-            doc_id = str(n_id[c])
-            if doc_id not in choices and doc_id not in gold_ids:
-                # good choice!
-                choices.append(doc_id)
-                score = str(dist_neighbors[qi, og_index])
-                doc_text = n_text[c]
-                res_dict = get_doc(doc_dataset, doc_id, doc_text, score, title_dict, logger)
-                res_dict['neighbor_id'] = str(og_index)
-                ret.append(res_dict)
-            # else continue generating
-        query_data[qi]['docs'] = ret
+            ret = []  # list of doc dicts
+            choices = []  # track so no duplicates and no golds
+            while len(choices) < 100:
+                c = random.randrange(len(n_id))
+                og_index = c + start_index
+                doc_id = str(n_id[c])
+                if doc_id not in choices and doc_id not in gold_ids:
+                    # good choice!
+                    choices.append(doc_id)
+                    score = str(dist_neighbors[qi, og_index])
+                    doc_text = n_text[c]
+                    res_dict = get_doc(doc_dataset, doc_id, doc_text, score, title_dict, logger)
+                    res_dict['neighbor_id'] = str(og_index)
+                    ret.append(res_dict)
+                # else continue generating
+            query_data[qi]['docs'] = ret
 
-    # output percentile json so memory isn't exceeded 
-    percentile_file_name = output_file_name.split(".json")[0] + "-random-" + str((i+1)*10) + ".json"
-    # load existing file if it exists
-    if os.path.exists(os.path.join(DATA_PATH, percentile_file_name)):
-        prev_batch_file = load_json(os.path.join(DATA_PATH, percentile_file_name))
-        query_data = prev_batch_file + query_data
-    save_file(percentile_file_name, query_data, logger)
+        # output percentile json so memory isn't exceeded 
+        percentile_file_name = output_file_name.split(".json")[0] + "-random-" + str((i+1)*10) + ".json"
+        # load existing file if it exists
+        if os.path.exists(os.path.join(DATA_PATH, percentile_file_name)):
+            prev_batch_file = load_json(os.path.join(DATA_PATH, percentile_file_name))
+            query_data = prev_batch_file + query_data
+        save_file(percentile_file_name, query_data, logger)

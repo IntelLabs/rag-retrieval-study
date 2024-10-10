@@ -88,7 +88,7 @@ def remove_citations(sent):
 def get_max_memory():
     """Get the maximum memory available for the current GPU for loading models."""
     free_in_GB = int(torch.cuda.mem_get_info()[0]/1024**3)
-    max_memory = f'{free_in_GB-6}GB'
+    max_memory = f'{free_in_GB-4}GB'
     n_gpus = torch.cuda.device_count()
     max_memory = {i: max_memory for i in range(n_gpus)}
     return max_memory

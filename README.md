@@ -104,7 +104,7 @@ python3 reader/run.py --config {config_name} --noise_file {noise_name}
 
 ### Reader evaluation
 
-ACLE evaluation is implemented in `run/eval.py`. The metrics are tailored to each dataset as outlined in the script. 
+Accuracy on the QA task is implemented in run/eval.py. The evaluation code contains copies of functions from two RAG papers that previously used these datasets ([ALCE](https://github.com/princeton-nlp/ALCE) and [RAGGED](https://github.com/neulab/ragged)).
 
 For ASQA and QAMPARI, use the following command
 ```bash

@@ -20,6 +20,7 @@ def bootstrap_ci(data, key_prefix, func=np.mean, n_boot=1000, percentiles=[2.5, 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--datasets", nargs='+', default=['asqa', 'nq']) 
+    parser.add_argument("-f", "--subfolder", type=str, default=None) 
     parser.add_argument("-m", "--models", nargs='+', default=['Llama', 'Mistral'])
     parser.add_argument("-r", "--retrievers", nargs='+', default=['gold', 'closedbook', 'bge-base', 'colbert'])
     args = parser.parse_args()
@@ -35,14 +36,15 @@ if __name__ == "__main__":
     for dataset in datasets:
         for model in models:
             for cond in conditions:
-                score_list = pathlib.Path(RESULTS_PATH + '/reader').rglob(f'{dataset}*{model}*{cond}*perquery.score')
+                if args.subfolder:
+                    score_list = pathlib.Path(RESULTS_PATH + f'/reader/{args.subfolder}').rglob(f'{dataset}*{model}*{cond}*perquery.score')
+                else:
+                    score_list = pathlib.Path(RESULTS_PATH + '/reader').rglob(f'{dataset}*{model}*{cond}*perquery.score')
                 for fname in score_list:
                     fstr = str(fname)
-                    if 'bin' in fstr or 'noise' in fstr:
-                        continue
                     fname_agg = fstr[:-20] + '-mean-ci.score'
                     if os.path.exists(fname_agg):
-                        print(f"Already computed CIs for {fname_agg}, continuing...")
+                        print(f"{fname_agg} exists, continuing...")
                         continue
                     else:
                         stat_list = {} #= load_json(fname_agg)

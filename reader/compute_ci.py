@@ -58,8 +58,9 @@ if __name__ == "__main__":
                     elif dataset == 'qampari':
                        acc = tmp_df['qampari_rec_top5']
                     stat_list.update(bootstrap_ci(acc, key_prefix='em_rec'))
-                    for cm in citation_measures:
-                        stat_list.update(bootstrap_ci(tmp_df[cm], key_prefix=cm))
+                    if 'shot0' not in fstr:  # Skip computing citation metrics if this is the vanilla NQ task
+                        for cm in citation_measures:
+                            stat_list.update(bootstrap_ci(tmp_df[cm], key_prefix=cm))
                     save_json(stat_list, fname_agg)
                     print(f"Created score file {fname_agg} with CIs using perquery data")
                     del tmp_df, acc, fname_agg

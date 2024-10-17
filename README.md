@@ -11,10 +11,12 @@ This is a research code repository associated with the paper "Toward Optimal Sea
 
 ## Requirements
 
-Please install the latest versions of PyTorch (`torch`), HuggingFace Transformers (`transformers`), HuggingFace Accelerate (`accelerate`), and the OpenAI API package (`openai`). This codebase is tested on 
-`torch==2.1.0.dev20230514+cu118`, `transformers==4.28.1`, `accelerate==0.17.1`, and `openai==0.27.4` with Python 3.9.7.
-(add to this list to reflect ragged requirements) 
+Full details of the package versions we used for the latest experiments are in the `conda_env.yaml` file.
+Details on which packages are required for each of the retrievers can be found in the [Retriever](#retriever) section. You will also need the HuggingFace `datasets` library and the `sentence-transformers` library to process the text data and embed it into vectors.
 
+To run the reader portion of the RAG pipeline, i.e. LLM inference, please install the latest versions of PyTorch (`torch`), HuggingFace Transformers (`transformers`), HuggingFace Accelerate (`accelerate`). You will also need `nltk`.
+
+To calculate evaluation scores for LLM outputs, you will also need `rouge-score`, and `scipy`.
 
 ## Code Structure
 * `setup`: directory containing scripts for downloading data and setting env variables

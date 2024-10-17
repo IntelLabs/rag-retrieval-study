@@ -106,7 +106,6 @@ def colbert_retrieval(
             model_path,
             doc_dataset,
             doc_path,
-            logger
         )
 
         logger.info("Indexing complete")
@@ -176,8 +175,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Passage retrieval.")
     parser.add_argument("--config", type=str, default=None, help="name of config file in retriever/configs/")
-    parser.add_argument("--k", default=100, help="Number of nearest neighbors to retrieve, or 'all'")
-    parser.add_argument("--retriever", type=str, help="options: colbert/dense")
+    parser.add_argument("--k", default=100, type=int, help="Number of nearest neighbors to retrieve, or 'all'")
     parser.add_argument("--query_file", type=str, help="path to the data file with queries")
     parser.add_argument("--query_dataset", type=str, help="query dataset name -> options: nq")
     parser.add_argument("--doc_dataset", type=str, help="dataset name -> options: kilt_wikipedia/// ")

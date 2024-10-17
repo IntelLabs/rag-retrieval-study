@@ -1,5 +1,5 @@
-# ALCE-RAGGED Integrated Repo
-
+# Toward Optimal Search and Retrieval for RAG
+This is a research code repository associated with the paper "Toward Optimal Search and Retrieval for RAG."
 
 ## Quick Links
 
@@ -126,3 +126,12 @@ To generate per-k reader result plots with retrieval results on the same axis, r
 ```bash
 python reader/plot_per_k.py --eval_file {dataset}-{model_name}-None-shot{}-ndoc*-42-{cite-}{retriever}.json.score --ret_file {dataset}_retrieval-{retriever}.json --ret_metric {top-k accuracy/precision@k/recall@k}
 ```
+
+## Disclaimer
+This “research quality code” is provided by Intel “As Is” without any express 
+or implied warranty of any kind. Intel does not warrant or assume 
+responsibility for the accuracy or completeness of any information, text, 
+graphics, links or other items within the code. A thorough security review 
+has not been performed on this code. Additionally, this repository will not 
+be actively maintained and as such may contain components that are out of 
+date, or contain known security vulnerabilities.  Proceed with caution.

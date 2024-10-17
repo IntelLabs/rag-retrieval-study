@@ -46,7 +46,7 @@ There are existing config files in retriever/configs or you can create your own.
 There are additional packages required for the retrieval steps. The packages differ for each type of retriever.
 
 ### Dense embedding retrieval with SVS (Scalable Vector Search)
-Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings[(https://huggingface.co/BAAI/bge-base-en-v1.5/tree/main)) is performed with Intel's Scalable Vector Search library. You can install it directly from pip by running `pip install scalable-vs`. It is imported into Python by `import svs`.
+Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings](https://huggingface.co/BAAI/bge-base-en-v1.5/tree/main)) is performed with Intel's Scalable Vector Search library. You can install it directly from pip by running `pip install scalable-vs`. It is imported into Python by `import svs`.
 
 Alternatively, you can make more system-specific install configurations by following the [documentation here](https://intel.github.io/ScalableVectorSearch/).
 

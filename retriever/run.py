@@ -5,7 +5,7 @@ import os, sys
 import logging
 import yaml
 
-import pysvs
+import svs
 
 # import indexing functions for all retrievers
 from retriever.ret_utils import *
@@ -131,7 +131,7 @@ def dense_random_retrieval(
     index_kwargs: dict,
     output_file_name,
     logger,
-    doc_dtype: pysvs.DataType = pysvs.float32,
+    doc_dtype: svs.DataType = svs.float32,
     load_search_results=None
 ):
     
@@ -232,7 +232,7 @@ def dense_retrieval(
     embed_model_name: str,
     embed_model_type: str,
     index_fn,
-    dist_type: pysvs.DistanceType,
+    dist_type: svs.DistanceType,
     num_threads: int,
     text_key: str,
     index_kwargs: dict,
@@ -240,7 +240,7 @@ def dense_retrieval(
     search_win_size: int,
     output_file_name: str,
     logger: logging.Logger,
-    doc_dtype: pysvs.DataType = pysvs.float32,
+    doc_dtype: svs.DataType = svs.float32,
     load_search_results=None,
     load_index=None
 ):
@@ -308,7 +308,7 @@ def dense_retrieval(
         #    calib_str = 'asqa_bge-base-dense'
         #    groundtruth = np.load(f'{calib_path}/{calib_str}_ground_truth.npy')
         #    qi = np.load(f'{calib_path}/{calib_str}_query_inds.npy')
-        #    recall = pysvs.k_recall_at(groundtruth, k_neighbors[qi, :], 10, 10)
+        #    recall = svs.k_recall_at(groundtruth, k_neighbors[qi, :], 10, 10)
         #    logger.info(f"Sanity check: search recall is {recall} when compared to ground truth of nearest neighbors")
     
         # Save direct search outputs before writing to JSON
@@ -446,9 +446,9 @@ if __name__ == "__main__":
     parser.add_argument("--embed_file", default=None, help='path to .fvecs vector embedding file from $VEC_PATH')
     parser.add_argument("--embed_model_name", default=None, help='model to use for embedding queries with SentenceTransformer (eg. "snowflake/snowflake-arctic-embed-s")')
     parser.add_argument("--embed_model_type", default="st", help="Type of embedding model to use, choose from [st, hf]. st is SentenceTransformers and hf is HuggingFace")
-    parser.add_argument("--index_fn", default=pysvs.Flat, help='type of SVS index used for dense vector retrieval')
-    parser.add_argument("--dist_type", default=pysvs.DistanceType.MIP, help='type of distance to use for index/search')
-    parser.add_argument("--doc_dtype", default=pysvs.float32,
+    parser.add_argument("--index_fn", default=svs.Flat, help='type of SVS index used for dense vector retrieval')
+    parser.add_argument("--dist_type", default=svs.DistanceType.MIP, help='type of distance to use for index/search')
+    parser.add_argument("--doc_dtype", default=svs.float32,
                         help='data type for the corpus vectors')
     parser.add_argument("--num_threads", type=int, default=32, help='number of threads for SVS indexing')
     parser.add_argument("--text_key", type=str, default="text", help='key in corpus data dictionary')

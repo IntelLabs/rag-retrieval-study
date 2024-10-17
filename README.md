@@ -44,7 +44,10 @@ There are existing config files in retriever/configs or you can create your own.
 There are additional packages required for the retrieval steps. The packages differ for each type of retriever.
 
 ### Dense embedding retrieval with SVS (Scalable Vector Search)
-Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings[(link)) is performed with Intel's Scalable Vector Search library. This is available on pip or conda. [Documentation here](https://intel.github.io/ScalableVectorSearch/).
+Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings[(https://huggingface.co/BAAI/bge-base-en-v1.5/tree/main)) is performed with Intel's Scalable Vector Search library. You can install it directly from pip by running `pip install scalable-vs`. It is imported into Python by `import svs`.
+
+Alternatively, you can make more system-specific install configurations by following the [documentation here](https://intel.github.io/ScalableVectorSearch/).
+
 We have implemented similarity-based retrieval with either exact search or approximate nearest neighbor (ANN) search. Retriever configuration files for exact search are titled `dense_{DATASET}.yaml`, while approximate search parameters can be set in configuration files titled `dense_ann_{DATASET}.yaml`. Several of the parameters for building the ANN search graph can be modified to alter the search performance, but we have provided configurations that work well for those datasets.
 
 For some experiments, we have tuned the ANN search to achieve a specific accuracy compared to exact search. Therefore we have included a `preprocessing/create_ground_truth_calibration.py` script to save the results of exact search on a subset of the data.

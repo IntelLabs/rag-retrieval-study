@@ -1,5 +1,5 @@
-# ALCE-RAGGED Integrated Repo
-
+# Toward Optimal Search and Retrieval for RAG
+This is a research code repository associated with the paper "Toward Optimal Search and Retrieval for RAG."
 
 ## Quick Links
 
@@ -44,7 +44,7 @@ There are existing config files in retriever/configs or you can create your own.
 There are additional packages required for the retrieval steps. The packages differ for each type of retriever.
 
 ### Dense embedding retrieval with SVS (Scalable Vector Search)
-Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings[(link)) is performed with Intel's Scalable Vector Search library. This is available on pip or conda. [Documentation here](https://intel.github.io/ScalableVectorSearch/).
+Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings[(link)) is performed with Intel's Scalable Vector Search library. This is available on pip. [Documentation here](https://intel.github.io/ScalableVectorSearch/).
 We have implemented similarity-based retrieval with either exact search or approximate nearest neighbor (ANN) search. Retriever configuration files for exact search are titled `dense_{DATASET}.yaml`, while approximate search parameters can be set in configuration files titled `dense_ann_{DATASET}.yaml`. Several of the parameters for building the ANN search graph can be modified to alter the search performance, but we have provided configurations that work well for those datasets.
 
 For some experiments, we have tuned the ANN search to achieve a specific accuracy compared to exact search. Therefore we have included a `preprocessing/create_ground_truth_calibration.py` script to save the results of exact search on a subset of the data.
@@ -123,3 +123,12 @@ To generate per-k reader result plots with retrieval results on the same axis, r
 ```bash
 python reader/plot_per_k.py --eval_file {dataset}-{model_name}-None-shot{}-ndoc*-42-{cite-}{retriever}.json.score --ret_file {dataset}_retrieval-{retriever}.json --ret_metric {top-k accuracy/precision@k/recall@k}
 ```
+
+## Disclaimer
+This “research quality code” is provided by Intel “As Is” without any express 
+or implied warranty of any kind. Intel does not warrant or assume 
+responsibility for the accuracy or completeness of any information, text, 
+graphics, links or other items within the code. A thorough security review 
+has not been performed on this code. Additionally, this repository will not 
+be actively maintained and as such may contain components that are out of 
+date, or contain known security vulnerabilities.  Proceed with caution.

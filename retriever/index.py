@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 import os
-import pysvs
+import svs
 
 
 DATA_PATH = os.environ.get("DATA_PATH")
@@ -11,8 +11,8 @@ def dense_build_index(
         index_path: str,
         vec_file: str,
         index_fn,
-        dist_type: pysvs.DistanceType,
-        corpus_dtype: pysvs.DataType = pysvs.float32,
+        dist_type: svs.DistanceType,
+        corpus_dtype: svs.DataType = svs.float32,
         index_kwargs: dict = {},
         calib_kwargs: dict = {},
         search_window: int = None,
@@ -30,40 +30,40 @@ def dense_build_index(
     logger.info(f"Loading vectors from {vec_file}")
     try:
         # NOTE: dataloader had an error unless using the exact file path & dtype. File an issue?
-        vec_data = pysvs.VectorDataLoader(vec_file, corpus_dtype)
+        vec_data = svs.VectorDataLoader(vec_file, corpus_dtype)
         logger.info("Vectors loaded with VectorDataLoader")
     except Exception as e:
         logger.info(f"Vector loader didn't work: {e}")
-        vec_data = pysvs.read_vecs(vec_file)
+        vec_data = svs.read_vecs(vec_file)
         logger.info(f"But direct loading of vectors did work.")
 
     # For Approx Nearest Neighbors (ANN) search, initialize the search graph
-    if (index_fn == pysvs.Vamana) and (cfg is None):
+    if (index_fn == svs.Vamana) and (cfg is None):
         logger.info(f"Building index from {vec_file} with {index_kwargs}")
         # Must build the index, so let's load the build parameters
         build_args = index_kwargs.pop('vamana_build_params', None)
         if build_args:
             assert isinstance(build_args, dict), "vamana_build_params must be a dict"
-            build_params = pysvs.VamanaBuildParameters(**build_args)
+            build_params = svs.VamanaBuildParameters(**build_args)
         else:
-            build_params = pysvs.VamanaBuildParameters()
+            build_params = svs.VamanaBuildParameters()
         # TODO: file issue about inconsistent input argument naming
-        index = pysvs.Vamana.build(build_parameters=build_params, data_loader=vec_data, distance_type=dist_type,
+        index = svs.Vamana.build(build_parameters=build_params, data_loader=vec_data, distance_type=dist_type,
                                    **index_kwargs)
     else:
         # Load an existing index. Flat indices do not require building, just initializing here.
         if cfg:
             # Load search graph & put the config path back in the parameters
-            index_kwargs.update({'graph_loader': pysvs.GraphLoader(os.path.join(cfg, 'graph')), 'config_path': cfg})
+            index_kwargs.update({'graph_loader': svs.GraphLoader(os.path.join(cfg, 'graph')), 'config_path': cfg})
             # Remove the build parameters since we're just loading it
             _ = index_kwargs.pop('vamana_build_params', None)
         logger.info(f"Loading index from {vec_file} with {index_kwargs}")
         index = index_fn(data_loader=vec_data, distance=dist_type, **index_kwargs)
 
     if calib_kwargs:  # calibrate Vamana graph if requested
-        params = pysvs.VamanaCalibrationParameters()
+        params = svs.VamanaCalibrationParameters()
         params.use_existing_parameter_values = True
-        params.search_buffer_optimization = pysvs.VamanaSearchBufferOptimization.ROIOnly
+        params.search_buffer_optimization = svs.VamanaSearchBufferOptimization.ROIOnly
         params.train_prefetchers = False
         # queries: numpy.ndarray[float16], groundtruth: numpy.ndarray[numpy.uint32], num_neighbors: int
         calib_str = calib_kwargs.pop('calib_prefix')
@@ -79,7 +79,7 @@ def dense_build_index(
         index.search_window_size = search_window
         logger.info(f"Manually set search parameters to {index.search_parameters}")
     
-    if (not index_fn == pysvs.Flat) and (cfg is None):
+    if (not index_fn == svs.Flat) and (cfg is None):
         try:
             index.save(config_directory=index_path,
                        graph_directory=os.path.join(index_path, 'graph'),
@@ -89,6 +89,6 @@ def dense_build_index(
             logger.info(e)
             logger.warning(f"Unsupported index type {index_fn} could not be saved.")
     else:
-        logger.info("Indices of type 'pysvs.Flat' cannot be saved.")
+        logger.info("Indices of type 'svs.Flat' cannot be saved.")
 
     return index

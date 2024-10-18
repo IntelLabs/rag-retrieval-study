@@ -1,5 +1,5 @@
-# ALCE-RAGGED Integrated Repo
-
+# Toward Optimal Search and Retrieval for RAG
+This is a research code repository associated with the paper "Toward Optimal Search and Retrieval for RAG."
 
 ## Quick Links
 
@@ -11,10 +11,12 @@
 
 ## Requirements
 
-Please install the latest versions of PyTorch (`torch`), HuggingFace Transformers (`transformers`), HuggingFace Accelerate (`accelerate`), and the OpenAI API package (`openai`). This codebase is tested on 
-`torch==2.1.0.dev20230514+cu118`, `transformers==4.28.1`, `accelerate==0.17.1`, and `openai==0.27.4` with Python 3.9.7.
-(add to this list to reflect ragged requirements) 
+Full details of the package versions we used for the latest experiments are in the `conda_env.yaml` file.
+Details on which packages are required for each of the retrievers can be found in the [Retriever](#retriever) section. You will also need the HuggingFace `datasets` library and the `sentence-transformers` library to process the text data and embed it into vectors.
 
+To run the reader portion of the RAG pipeline, i.e. LLM inference, please install the latest versions of PyTorch (`torch`), HuggingFace Transformers (`transformers`), HuggingFace Accelerate (`accelerate`). You will also need `nltk`.
+
+To calculate evaluation scores for LLM outputs, you will also need `rouge-score`, and `scipy`.
 
 ## Code Structure
 * `setup`: directory containing scripts for downloading data and setting env variables
@@ -44,7 +46,10 @@ There are existing config files in retriever/configs or you can create your own.
 There are additional packages required for the retrieval steps. The packages differ for each type of retriever.
 
 ### Dense embedding retrieval with SVS (Scalable Vector Search)
-Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings[(link)) is performed with Intel's Scalable Vector Search library. This is available on pip or conda. [Documentation here](https://intel.github.io/ScalableVectorSearch/).
+Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings](https://huggingface.co/BAAI/bge-base-en-v1.5/tree/main)) is performed with Intel's Scalable Vector Search library. You can install it directly from pip by running `pip install scalable-vs`. It is imported into Python by `import svs`.
+
+Alternatively, you can make more system-specific install configurations by following the [documentation here](https://intel.github.io/ScalableVectorSearch/).
+
 We have implemented similarity-based retrieval with either exact search or approximate nearest neighbor (ANN) search. Retriever configuration files for exact search are titled `dense_{DATASET}.yaml`, while approximate search parameters can be set in configuration files titled `dense_ann_{DATASET}.yaml`. Several of the parameters for building the ANN search graph can be modified to alter the search performance, but we have provided configurations that work well for those datasets.
 
 For some experiments, we have tuned the ANN search to achieve a specific accuracy compared to exact search. Therefore we have included a `preprocessing/create_ground_truth_calibration.py` script to save the results of exact search on a subset of the data.
@@ -123,3 +128,12 @@ To generate per-k reader result plots with retrieval results on the same axis, r
 ```bash
 python reader/plot_per_k.py --eval_file {dataset}-{model_name}-None-shot{}-ndoc*-42-{cite-}{retriever}.json.score --ret_file {dataset}_retrieval-{retriever}.json --ret_metric {top-k accuracy/precision@k/recall@k}
 ```
+
+## Disclaimer
+This “research quality code” is provided by Intel “As Is” without any express 
+or implied warranty of any kind. Intel does not warrant or assume 
+responsibility for the accuracy or completeness of any information, text, 
+graphics, links or other items within the code. A thorough security review 
+has not been performed on this code. Additionally, this repository will not 
+be actively maintained and as such may contain components that are out of 
+date, or contain known security vulnerabilities.  Proceed with caution.

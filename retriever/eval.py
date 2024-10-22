@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 from file_utils import save_json, load_json
+from reader.compute_ci import bootstrap_ci
 
 
 def count_jsonl(filename):
@@ -86,14 +87,11 @@ def get_retriever_results(eval_data, par_level, plot=True):
             retriever_result['gold provenance metadata']['num_ids'] = len(gold_ids)
             retriever_result['passage-level results'] = doc_retriever_results
             retriever_results.append(retriever_result)
-            
-            
-                
 
     return retriever_results
 
 
-def print_retriever_acc(retriever_results, gold_data, par_level):
+def print_retriever_acc(retriever_results, gold_data, par_level, ci=False):
     if par_level:
         page_id_per_r = []
         page_par_id_per_r = []
@@ -114,16 +112,17 @@ def print_retriever_acc(retriever_results, gold_data, par_level):
             answer_in_context_per_r.append(answer_in_context)
 
         ks = np.arange(1, len(page_id_per_r[0])+1)
-        results_by_k = {}
+        results_by_k, results_lists = {}, {}
         for k in ks:
-            results_by_k[(int)(k)] = {
-                f'top-k accuracy page_id': 0,\
-                f'top-k accuracy page_par_id': 0,\
-                f"precision@k page_id": 0,\
-                f"precision@k page_par_id": 0,\
-                f"recall@k page_id": 0,\
-                f"recall@k page_par_id": 0,\
-                'answer_in_context@k': 0
+            results_by_k[int(k)] = {}
+            results_lists[(int)(k)] = {
+                f'top-k accuracy page_id': [],\
+                f'top-k accuracy page_par_id': [],\
+                f"precision@k page_id": [],\
+                f"precision@k page_par_id": [],\
+                f"recall@k page_id": [],\
+                f"recall@k page_par_id": [],\
+                'answer_in_context@k': []
             }
             for r in range(len(retriever_results)):
 
@@ -132,52 +131,55 @@ def print_retriever_acc(retriever_results, gold_data, par_level):
                 guess_page_id_set = set(page_id_per_r[r][:k])
                 guess_page_par_id_set = set(page_par_id_per_r[r][:k])
                 
-                results_by_k[(int)(k)][f'top-k accuracy page_id'] += any([(w in gold_page_id_set) for w in guess_page_id_set])
-                results_by_k[(int)(k)][f'top-k accuracy page_par_id'] += any([(w in gold_page_par_id_set) for w in guess_page_par_id_set])
-                results_by_k[(int)(k)][f"precision@k page_id"] += get_precision(guess_page_id_set, gold_page_id_set)
-                results_by_k[(int)(k)][f"precision@k page_par_id"] += get_precision(guess_page_par_id_set, gold_page_par_id_set)
-                results_by_k[(int)(k)][f"recall@k page_id"] += get_recall(guess_page_id_set, gold_page_id_set)
-                results_by_k[(int)(k)][f"recall@k page_par_id"] += get_recall(guess_page_par_id_set, gold_page_par_id_set)
-                results_by_k[(int)(k)]["answer_in_context@k"] += any(answer_in_context_per_r[r][:k])
+                results_lists[(int)(k)][f'top-k accuracy page_id'].append(any([(w in gold_page_id_set) for w in guess_page_id_set]))
+                results_lists[(int)(k)][f'top-k accuracy page_par_id'].append(any([(w in gold_page_par_id_set) for w in guess_page_par_id_set]))
+                results_lists[(int)(k)][f"precision@k page_id"].append(get_precision(guess_page_id_set, gold_page_id_set))
+                results_lists[(int)(k)][f"precision@k page_par_id"].append(get_precision(guess_page_par_id_set, gold_page_par_id_set))
+                results_lists[(int)(k)][f"recall@k page_id"].append(get_recall(guess_page_id_set, gold_page_id_set))
+                results_lists[(int)(k)][f"recall@k page_par_id"].append(get_recall(guess_page_par_id_set, gold_page_par_id_set))
+                results_lists[(int)(k)]["answer_in_context@k"].append(any(answer_in_context_per_r[r][:k]))
 
-            for key,val in results_by_k[(int)(k)].items():
-                results_by_k[(int)(k)][key] = val/len(retriever_results)
+            for key, val in results_lists[(int)(k)].items():
+                arrval = np.array(val)
+                if ci:
+                    ci_dict = bootstrap_ci(arrval, key)
+                    results_by_k[int(k)].update(ci_dict)
+                else:
+                    results_by_k[(int)(k)][key] = arrval.mean()
     else:
         id_per_r = []
-        # answer_in_context_per_r = []
 
         for r in retriever_results:
             ids = []
-            # answer_in_context = []
-            
             for d in r['passage-level results']:
                 ids.append(d[f'id'])
-                # answer_in_context.append(d['answer_in_context'])
-
             id_per_r.append(ids)
-            # answer_in_context_per_r.append(answer_in_context)
 
         ks = np.arange(1, len(id_per_r[0])+1)
-        results_by_k = {}
+        results_by_k, results_lists = {}, {}
         for k in ks:
-            results_by_k[(int)(k)] = {
-                f'top-k accuracy id': 0,\
-                f"precision@k id": 0,\
-                f"recall@k id": 0
-                # 'answer_in_context@k': 0
+            results_by_k[int(k)] = {}
+            results_lists[(int)(k)] = {
+                f'top-k accuracy id': [],\
+                f"precision@k id": [],\
+                f"recall@k id": []
             }
             for r in range(len(retriever_results)):
 
                 gold_id_set = gold_data[r]['output'][f'id_set']
                 guess_id_set = set(id_per_r[r][:k])
                 
-                results_by_k[(int)(k)][f'top-k accuracy id'] += any([(w in gold_id_set) for w in guess_id_set])
-                results_by_k[(int)(k)][f"precision@k id"] += get_precision(guess_id_set, gold_id_set)
-                results_by_k[(int)(k)][f"recall@k id"] += get_recall(guess_id_set, gold_id_set)
-                # results_by_k[(int)(k)]["answer_in_context@k"] += any(answer_in_context_per_r[r][:k])
+                results_lists[(int)(k)][f'top-k accuracy id'].append(any([(w in gold_id_set) for w in guess_id_set]))
+                results_lists[(int)(k)][f"precision@k id"].append(get_precision(guess_id_set, gold_id_set))
+                results_lists[(int)(k)][f"recall@k id"].append(get_recall(guess_id_set, gold_id_set))
 
-            for key,val in results_by_k[(int)(k)].items():
-                results_by_k[(int)(k)][key] = val/len(retriever_results)
+            for key, val in results_lists[(int)(k)].items():
+                arrval = np.array(val)
+                if ci:
+                    ci_dict = bootstrap_ci(arrval, key)
+                    results_by_k[int(k)].update(ci_dict)
+                else: 
+                    results_by_k[(int)(k)][key] = arrval.mean()
 
     return results_by_k, ks
 
@@ -314,29 +316,40 @@ def main(args):
     if args.not_par_level:
         par_level = False
 
-    plt_title = args.eval_file.split('.json')[0]  # make json with same name as input file
-    if plot:
-        out_file = os.path.join(evaluation_dir, f"{plt_title}_neighbor_sim.jpg")
-        plot_sim_scores(eval_data, plt_title, out_file, par_level)
+    file_prefix = args.eval_file.split('.json')[0]  # make json with same name as input file
+    # Plot neighbor similarity values
+    if not args.no_plot:
+        out_file = os.path.join(evaluation_dir, f"{file_prefix}_neighbor_sim.jpg")
+        plot_sim_scores(eval_data, file_prefix, out_file, par_level)
         logger.info(f'saving figure in {out_file}')
 
-    par_retriever_results = get_retriever_results(eval_data, par_level, plot=not args.no_plot)
-    save_json(par_retriever_results, os.path.join(evaluation_dir, plt_title + "_results.json"), logger)  
+    json_fn = os.path.join(evaluation_dir, file_prefix + "_results.json")
+    if os.path.exists(json_fn):
+        logger.info("Loading existing JSON file with retriever results...")
+        par_retriever_results = load_json(json_fn, logger=logger)
+    else:
+        par_retriever_results = get_retriever_results(eval_data, par_level, plot=not args.no_plot)
+        save_json(par_retriever_results, json_fn, logger)  
 
-    results_by_k, ks = print_retriever_acc(par_retriever_results, eval_data, par_level)
-    save_json(results_by_k, os.path.join(evaluation_dir, f'{plt_title}_results_by_k.json'), logger)
+    results_by_k, ks = print_retriever_acc(par_retriever_results, eval_data, par_level, args.ci)
+    if args.ci:
+        save_json(results_by_k, os.path.join(evaluation_dir, f'{file_prefix}_results_by_k_ci.json'), logger)
+    else:
+        save_json(results_by_k, os.path.join(evaluation_dir, f'{file_prefix}_results_by_k.json'), logger)
 
+    # Plot metrics with varying k 
     if not args.no_plot:
         for m in ["top-k accuracy", "precision@k", "recall@k"]:
-            out_file = os.path.join(evaluation_dir, f"{plt_title}_{m.replace(' ', '_')}_results_by_k.jpg")
-            generate_plot(ks, results_by_k, plt_title, out_file, m, par_level)
+            out_file = os.path.join(evaluation_dir, f"{file_prefix}_{m.replace(' ', '_')}_results_by_k.jpg")
+            generate_plot(ks, results_by_k, file_prefix, out_file, m, par_level)
             logger.info(f'saving figure in {out_file}')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Process input, gold, and output files")
     parser.add_argument("--eval_file", help="Eval file name in $DATA_DIR containing gold and predictions")
-    parser.add_argument("--not_par_level", action="store_true",  help="Whether gold data is divided by document, paragraph")
-    parser.add_argument("--no_plot", action="store_true",  help="Omit the plots")
+    parser.add_argument("--not_par_level", action="store_true", help="Whether gold data is divided by document, paragraph")
+    parser.add_argument("--no_plot", action="store_true", help="Omit the plots")
+    parser.add_argument("--ci", action="store_true", help="Compute bootstrap 95% CIs")
     args = parser.parse_args()
     main(args)

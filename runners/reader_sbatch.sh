@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=readnq-colbert
+#SBATCH --job-name=nocite-asqa
 #SBATCH --nodes=1
 #SBATCH -t 3-0
 #SBATCH -o logs/reader_ndoc/%x-%A_%a.out
@@ -18,19 +18,17 @@ set -x
 
 karray=(1 2 3 4 5 10 20 100)
 k=${karray[$SLURM_ARRAY_TASK_ID]}
+nk=${#karray[@]}
 
 python3 reader/run.py \
-    --config nq_mistral-7b-instruct_shot2_colbert_default.yaml \
-    --prompt_file nq_default.json \
-    --shot 0 \
-    --eval_file nq_retrieval-colbert.json \
+    --config asqa_mistral-7b-instruct_shot0_bge_base_nocite.yaml \
     --ndoc ${k}
 
-#if [ $SLURM_ARRAY_TASK_ID -eq 6 ]; then
-#    python3 reader/run.py \
-#        --config nq_llama-2-7b-chat_shot1_gold_default.yaml \
-#        --prompt_file nq_default.json \
-#        --shot 0 \
-#        --eval_file nq_gold.json \
-#        --ndoc 5
-#fi
+if [ $SLURM_ARRAY_TASK_ID -eq $nk ]; then
+    python3 reader/run.py \
+        --config asqa_mistral-7b-instruct_shot0_gold.yaml
+elif [ $SLURM_ARRAY_TASK_ID -eq $((nk + 1)) ]; then
+    python3 reader/run.py \
+        --config asqa_mistral-7b-instruct_shot0_ndoc0_closedbook.yaml
+fi
+

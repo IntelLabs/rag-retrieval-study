@@ -193,7 +193,9 @@ def main(args):
         name += f"-{args.ndoc_in_demo}_doc_in_demo"
     if args.num_samples > 1:
         name += f"-sample{args.num_samples}"
-    if 'cite' in args.prompt_file:
+    if 'nocite' in args.prompt_file:
+        name += "-nocite"
+    elif 'cite' in args.prompt_file:
         name += "-cite"
     
 
@@ -203,7 +205,7 @@ def main(args):
         name += '-bge-large'
     elif 'colbert' in args.eval_file:
         name += '-colbert'
-    elif 'gold' in args.eval_file:
+    elif 'gold' in args.eval_file and args.ndoc > 0:
         name += '-gold'
     else:
         name += '-no-context'

@@ -80,6 +80,11 @@ def compile_metric_df(filenames, extra_fields=None, nested=False):
     else:
         return pd.DataFrame(data_list)
 
+def get_ci_df(datasets, models, cond_list, subfolder):
+    file_list, field_list = load_metric_ci_files(datasets, models, cond_list, subfolder)
+    df = compile_metric_df(file_list, field_list)
+    return df
+
 def remove_errorbar_in_legend(ax):
     """
     Removes the error bars from the legend.

@@ -1,9 +1,9 @@
 ---
-prompt_file: asqa_closedbook.json
-eval_file: asqa_eval_gold.json
+prompt_file: nq_closedbook.json
+eval_file: nq_gold.json
 shot: 0
 ndoc: 0
-dataset_name: asqa
+dataset_name: nq
 model: meta-llama/Llama-2-7b-chat-hf
 temperature: 1.0
 top_p: 0.95

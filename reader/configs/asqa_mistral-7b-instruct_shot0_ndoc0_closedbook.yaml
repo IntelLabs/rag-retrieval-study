@@ -1,5 +1,5 @@
 ---
-prompt_file: any_nocite.json
+prompt_file: asqa_closedbook.json
 eval_file: asqa_eval_gold.json
 shot: 0
 ndoc: 0

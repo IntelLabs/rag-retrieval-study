@@ -1,7 +1,6 @@
 import argparse
 import gc
 import json
-import os, sys
 import logging
 import yaml
 
@@ -11,7 +10,7 @@ import svs
 from retriever.ret_utils import *
 import retriever.index as index
 from utils import InvalidArgument, IncompleteSetup
-from file_utils import save_json, load_json, save_pickle, load_pickle
+from file_utils import load_json, save_pickle, load_pickle
 
 DATA_PATH = os.environ.get("DATA_PATH")
 DATASET_PATH = os.environ.get("DATASET_PATH")
@@ -19,104 +18,6 @@ COLBERT_MODEL_PATH = os.environ.get("COLBERT_MODEL_PATH")
 INDEX_PATH = os.environ.get("INDEX_PATH")
 VEC_PATH = os.environ.get("VEC_PATH")
 
-
-def colbert_retrieval(
-    query_data,
-    k: int,
-    query_dataset,
-    doc_dataset,
-    output_file_name,
-    logger
-):
-    """
-    ColBERT retrieval indexing, searching, and output neighbors. Indexing already completed for doc_dataset will be reused
-    It assumes these things exist:
-        (1) Directory with downloaded colbert v2.0
-        (2) tsv file containing query id and query text, named '{DATASET_PATH}/{dataset_name}/queries.tsv'
-        (3) tsv file containing doc id, doc text, named '{DATASET_PATH}/{doc_dataset_name}/docs.tsv'
-        (4) JSONL file containing the mapping from document ID to document title, named '{DATASET_PATH}/{dataset_name}/id2title.jsonl'.
-    """
-
-    sys.path.append(os.path.join(os.path.dirname(__file__), 'ColBERT-main'))
-    from colbert.infra import Run, RunConfig, ColBERTConfig
-    from colbert import Indexer
-    from colbert.data import Queries
-    from colbert import Searcher
-
-
-    model_path = os.path.join(  # path to model used for indexing
-        COLBERT_MODEL_PATH,
-        'colbertv2.0/'
-    )
-    query_path = os.path.join(  # path to input query tsv 
-        DATASET_PATH,
-        query_dataset,
-        "queries.tsv"
-    )
-    doc_path = os.path.join(
-        DATASET_PATH,
-        doc_dataset,
-        "docs.tsv"
-    )
-    index_ret_path = os.path.join(
-        INDEX_PATH,
-        'colbert',
-        doc_dataset
-    )
-
-    exp_name = f'colbert'
-    prediction_temp_dir = ""
-
-    with Run().context(
-        RunConfig(
-            nranks=1,
-            experiment=exp_name,
-            index_root=index_ret_path,
-        )
-    ):
-        # index documents in $INDEX_DIR/colbert/doc_dataset
-        index_ds_path = os.path.join(index_ret_path, doc_dataset)
-        config = ColBERTConfig(
-            index_path=index_ds_path,
-            nbits=2,
-            root=prediction_temp_dir,
-        )
-        logger.info(f"Config for Colbert retrieval: {config}")
-    
-        logger.info("Start indexing....")
-        index.colbert_build_index(
-            config,
-            model_path,
-            doc_dataset,
-            doc_path,
-            logger
-        )
-
-        logger.info("Indexing complete")
-        searcher = Searcher(index=doc_dataset, config=config)
-        
-        logger.info(f"Loading queries from: {query_path}")
-        queries = Queries(query_path)
-
-        logger.info("Starting search...")
-        ranking = searcher.search_all(queries, k=k)
-
-        title_dict = get_title_dict(doc_dataset)
-
-        for idx, r in enumerate(ranking.data):
-            ret = []
-            for i, (c_id, rank, score) in enumerate(ranking.data[r]):
-                doc_id = searcher.collection.pid_list[c_id]
-                doc_text = searcher.collection.data[c_id]
-                res_dict = get_doc(doc_dataset, doc_id, doc_text, score, title_dict, logger)
-                ret.append(res_dict)
-            query_data[idx]["docs"] = ret  # double check I'm putting this in the right spot
-
-        logger.info("Search complete")
-
-    save_file(output_file_name, query_data, logger)
-    
-    return
 
 def dense_random_retrieval(
     query_data: dict,
@@ -371,65 +272,51 @@ def main(args):
         query_data = load_json(query_file, logger)
 
 
-    if args.retriever == "colbert":
-        colbert_retrieval(
+     # check that all required arguments are specified
+    if not args.embed_file:
+        logger.info("path to .fvecs vector embedding file from $VEC_PATH must be specified for retrieval with svs")
+        raise InvalidArgument
+    if not args.embed_model_name:
+        logger.info("model to use for embedding queries with SentenceTransformer (eg. 'snowflake/snowflake-arctic-embed-s') must be specified for retrieval with svs")
+        raise InvalidArgument
+    if args.noise_experiment:
+        dense_random_retrieval(
+            query_data,
+            args.doc_dataset,
+            args.embed_file,
+            args.embed_model_name,
+            args.embed_model_type,
+            args.index_fn,
+            args.dist_type,
+            args.num_threads,
+            args.text_key,
+            args.index_kwargs,
+            args.output_file,
+            logger,
+            args.doc_dtype,
+            args.load_search_results
+        )
+    else:
+        dense_retrieval(
             query_data,
             args.k,
-            args.query_dataset,
             args.doc_dataset,
+            args.embed_file,
+            args.embed_model_name,
+            args.embed_model_type,
+            args.index_fn,
+            args.dist_type,
+            args.num_threads,
+            args.text_key,
+            args.index_kwargs,
+            args.calib_kwargs,
+            args.search_win_size,
             args.output_file,
-            logger
+            logger,
+            args.doc_dtype,
+            args.load_search_results,
+            args.load_index
         )
-    elif args.retriever == "dense":
-         # check that all required arguments are specified
-        if not args.embed_file:
-            logger.info("path to .fvecs vector embedding file from $VEC_PATH must be specified for retrieval with svs")
-            raise InvalidArgument
-        if not args.embed_model_name:
-            logger.info("model to use for embedding queries with SentenceTransformer (eg. 'snowflake/snowflake-arctic-embed-s') must be specified for retrieval with svs")
-            raise InvalidArgument
-        if args.noise_experiment:
-            dense_random_retrieval(
-                query_data,
-                args.doc_dataset,
-                args.embed_file,
-                args.embed_model_name,
-                args.embed_model_type,
-                args.index_fn,
-                args.dist_type,
-                args.num_threads,
-                args.text_key,
-                args.index_kwargs,
-                args.output_file,
-                logger,
-                args.doc_dtype,
-                args.load_search_results
-            )
-        else: 
-            dense_retrieval(
-                query_data,
-                args.k,
-                args.doc_dataset,
-                args.embed_file,
-                args.embed_model_name,
-                args.embed_model_type,
-                args.index_fn,
-                args.dist_type,
-                args.num_threads,
-                args.text_key,
-                args.index_kwargs,
-                args.calib_kwargs,
-                args.search_win_size,
-                args.output_file,
-                logger,
-                args.doc_dtype,
-                args.load_search_results,
-                args.load_index
-            )
-    else:
-        print(f"Invalid retriever: {args.retriever}")
-        print("Current implemented options include: colbert/dense")
-        raise InvalidArgument
 
 
 if __name__ == "__main__":

@@ -55,6 +55,49 @@ def load_metric_ci_files(datasets, models, conditions, subfolder=None):
                         field_list.append(extra_fields)
     return file_list, field_list
 
+def load_metric_ndoc_files(datasets, models, retrievers, conditions, subfolder=None):
+    """
+    Utility that will find all the .score files for reporting reader recall with n docs in prompt.
+    """
+    base_path = RESULTS_PATH + '/reader' if subfolder is None else RESULTS_PATH + f'/reader/{subfolder}/'
+    field_list = []
+    file_list = []
+    for dataset in datasets:
+        for model in models:
+            for retriever in retrievers:
+                for cond in conditions:
+                    extra_fields = {'dataset': dataset,
+                                    'model': model,
+                                    'retriever': retriever,
+                                    'condition': cond}
+                    file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*ndoc{cond}-*{retriever}*score')
+                    if len(list(file_iter)) == 0:
+                        print(f"Could not find files for {dataset}, {model}, {retriever}, {cond}")
+                    for f in file_iter:
+                        fstr = str(f)
+                        file_list.append(fstr)
+                        field_list.append(extra_fields)
+
+            for s_cond in ['gold', 'no-context', 'closedbook']:
+
+                file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*-{s_cond}*score')
+                if s_cond == 'closedbook':
+                    s_cond = 'no-context'  # rename for consistency
+                extra_fields = {
+                    'dataset': dataset,
+                    'model': model,
+                    'retriever': None,
+                    'condition': s_cond
+                }
+                for f in file_iter:
+                    fstr = str(f)
+                    file_list.append(fstr)
+                    field_list.append(extra_fields)
+
+
+    return file_list, field_list
+
+
 def compile_metric_df(filenames, extra_fields=None, nested=False):
     """
     Utility to concatenate the data fields from all files in `filenames`, in addition to the `extra_fields` specified for each file.

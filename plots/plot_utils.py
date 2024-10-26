@@ -71,8 +71,8 @@ def load_metric_ndoc_files(datasets, models, retrievers, conditions, subfolder=N
                                     'retriever': retriever,
                                     'condition': cond}
                     file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*ndoc{cond}-*{retriever}*score')
-                    if len(list(file_iter)) == 0:
-                        print(f"Could not find files for {dataset}, {model}, {retriever}, {cond}")
+                    # if len(list(file_iter)) == 0:
+                    #     print(f"Could not find files for {dataset}, {model}, {retriever}, {cond}")
                     for f in file_iter:
                         fstr = str(f)
                         file_list.append(fstr)
@@ -93,7 +93,6 @@ def load_metric_ndoc_files(datasets, models, retrievers, conditions, subfolder=N
                     fstr = str(f)
                     file_list.append(fstr)
                     field_list.append(extra_fields)
-
 
     return file_list, field_list
 

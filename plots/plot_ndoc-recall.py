@@ -12,7 +12,7 @@ def main():
 
     acc_keys = {
         "nq": "ragged_substring_match",
-        "qampari": "qampari_rec_top5_mean"
+        "qampari": "qampari_rec_top5"
     }
     ret_colors = {
         "bge-base": "blue",
@@ -33,6 +33,7 @@ def main():
     colors = plt.cm.tab10(np.linspace(0, 1, 10))
 
     # a plot for each retriever/model combination
+    print('\n\nGenerating plots...')
     for model in models:
         fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 3.2))
         for ax_num, dataset in enumerate(datasets):
@@ -41,7 +42,6 @@ def main():
                 df_filtered = df[(df['model'] == model) & (df['retriever'] == retriever) & (df['dataset'] == dataset)]
                 if len(df_filtered) == 0:
                     print(f"Could not find data for {dataset}, {model}, {retriever}, skipping...")
-                    print(f"Dataframe: {df[['dataset', 'model', 'retriever', 'condition']][(df['model'] == model) & (df['retriever'] == retriever)]}")
                     continue
                 print(f"Plotting {model}, {retriever}, {dataset}...")
                 if not axh_plot:  # plot the no-context and gold lines
@@ -50,10 +50,11 @@ def main():
                     gold_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'gold')][acc_keys[dataset]].values[0]
                     ax[ax_num].axhline(y=gold_acc, color='green', linestyle='--', label='Gold')
                     axh_plot = True
-
+                print(df_filtered['condition'])
+                print(df_filtered[acc_keys[dataset]])
                 ax[ax_num].plot(df_filtered['condition'], df_filtered[acc_keys[dataset]], color=ret_colors[retriever], label=retriever)
                 ax[ax_num].scatter(df_filtered['condition'], df_filtered[acc_keys[dataset]], color=ret_colors[retriever])
-                # ax[ax_num].legend().remove()
+
                 acc_label = 'EM Recall'
                 if dataset == 'qampari':
                     acc_label += " -5"
@@ -70,7 +71,7 @@ def main():
 
         # Save the figure to an output file
         fig.tight_layout()
-        figname = f'plots/ndoc-reader-acc-{model}-{retriever}.png'
+        figname = f'plots/ndoc-reader-acc-{model}.png'
         plt.savefig(figname)
 
 

@@ -10,10 +10,11 @@ def main():
     models = ['Llama', 'Mistral']
     k_vals = [1, 2, 3, 4, 5, 10, 20, 50, 100]
 
-    acc_keys = {
-        "nq": "ragged_substring_match",
-        "qampari": "qampari_rec_top5"
-    }
+    # acc_keys = {
+    #     "nq": "em_rec_mean",
+    #     "qampari": "qampari_rec_top5",
+    #     "asqa": "em_rec_mean"
+    # }
     ret_colors = {
         "bge-base": "blue",
         "colbert": "orange"
@@ -32,9 +33,13 @@ def main():
     df_datasets = ['ASQA', 'NQ', 'QAMPARI']  # order that I want to plot the datasets
     colors = plt.cm.tab10(np.linspace(0, 1, 10))
 
+    # multiply accuracy by 10 for nq
+    df.loc[df['dataset'] == 'nq', 'em_rec_mean'] *= 100
+
     # a plot for each retriever/model combination
     print('\n\nGenerating plots...')
     for model in models:
+
         fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 3.2))
         for ax_num, dataset in enumerate(datasets):
             axh_plot = False
@@ -45,15 +50,15 @@ def main():
                     continue
                 print(f"Plotting {model}, {retriever}, {dataset}...")
                 if not axh_plot:  # plot the no-context and gold lines
-                    no_context_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'no-context')][acc_keys[dataset]].values[0]
+                    no_context_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'no-context')]["em_rec_mean"].values[0]
                     ax[ax_num].axhline(y=no_context_acc, color='red', linestyle='--', label='No Context')
-                    gold_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'gold')][acc_keys[dataset]].values[0]
+                    gold_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'gold')]["em_rec_mean"].values[0]
                     ax[ax_num].axhline(y=gold_acc, color='green', linestyle='--', label='Gold')
                     axh_plot = True
-                print(df_filtered['condition'])
-                print(df_filtered[acc_keys[dataset]])
-                ax[ax_num].plot(df_filtered['condition'], df_filtered[acc_keys[dataset]], color=ret_colors[retriever], label=retriever)
-                ax[ax_num].scatter(df_filtered['condition'], df_filtered[acc_keys[dataset]], color=ret_colors[retriever])
+                # print(df_filtered['condition'])
+                # print(df_filtered[acc_keys[dataset]])
+                ax[ax_num].plot(df_filtered['condition'], df_filtered["em_rec_mean"], color=ret_colors[retriever], label=retriever)
+                ax[ax_num].scatter(df_filtered['condition'], df_filtered["em_rec_mean"], color=ret_colors[retriever])
 
                 acc_label = 'EM Recall'
                 if dataset == 'qampari':

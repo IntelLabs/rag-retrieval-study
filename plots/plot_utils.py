@@ -101,8 +101,6 @@ def load_metric_ndoc_files(datasets, models, retrievers, conditions):
                 }
                 for f in file_iter:
                     fstr = str(f)
-                    if dataset == 'nq' and model == 'Llama':
-                        print(fstr)
                     file_list.append(fstr)
                     field_list.append(extra_fields)
 

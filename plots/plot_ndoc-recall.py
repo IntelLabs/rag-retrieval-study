@@ -31,11 +31,6 @@ def main():
     df = plot_utils.compile_metric_df(file_list, extra_fields=field_list, nested=False)
     print(df.describe())
 
-    # multiply accuracy by 100 for nq
-    df.loc[df['dataset'] == 'nq', 'em_rec_mean'] *= 100
-    df.loc[df['dataset'] == 'nq', 'em_rec_ci_lower'] *= 100
-    df.loc[df['dataset'] == 'nq', 'em_rec_ci_upper'] *= 100
-
     # a plot for each retriever/model combination
     print('\n\nGenerating plots...')
     for model in models:
@@ -77,6 +72,9 @@ def main():
                     ax[ax_x][ax_y].set_xlabel('k')
 
                 if shared_y:
+                    ax[ax_x][ax_y].set_ylim(0, 90)
+
+                if 'nq' in dataset:
                     ax[ax_x][ax_y].set_ylim(0, 90)
 
         # legend with only labels from first plot (top left)

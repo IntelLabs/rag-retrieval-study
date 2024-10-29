@@ -2,22 +2,24 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import plot_utils
+import seaborn as sns
+
 
 def main():
     plot_utils.set_plot_params()
-    datasets = ['asqa', 'nq', 'qampari']
+    colors = sns.color_palette()
+
+    datasets = ['asqa', 'qampari', 'nq', 'nq-nocite']
     retrievers = ['bge-base', 'colbert']
     models = ['Llama', 'Mistral']
     k_vals = [1, 2, 3, 4, 5, 10, 20, 50, 100]
+    shared_y = False
 
-    # acc_keys = {
-    #     "nq": "em_rec_mean",
-    #     "qampari": "qampari_rec_top5",
-    #     "asqa": "em_rec_mean"
-    # }
-    ret_colors = {
-        "bge-base": "blue",
-        "colbert": "orange"
+    subplot_indices = {
+        'asqa': [0, 0],
+        'qampari': [0, 1],
+        'nq': [1, 0],
+        'nq-nocite': [1, 1]
     }
 
     # grab the files and generate data frames
@@ -27,21 +29,19 @@ def main():
     )
 
     df = plot_utils.compile_metric_df(file_list, extra_fields=field_list, nested=False)
-    df.to_csv('ndoc_reader_recall.csv')
+    print(df.describe())
 
-    # now generate the plots!
-    df_datasets = ['ASQA', 'NQ', 'QAMPARI']  # order that I want to plot the datasets
-    colors = plt.cm.tab10(np.linspace(0, 1, 10))
-
-    # multiply accuracy by 10 for nq
+    # multiply accuracy by 100 for nq
     df.loc[df['dataset'] == 'nq', 'em_rec_mean'] *= 100
+    df.loc[df['dataset'] == 'nq', 'em_rec_ci_lower'] *= 100
+    df.loc[df['dataset'] == 'nq', 'em_rec_ci_upper'] *= 100
 
     # a plot for each retriever/model combination
     print('\n\nGenerating plots...')
     for model in models:
-
-        fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 3.2))
-        for ax_num, dataset in enumerate(datasets):
+        # fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 3.2))
+        fig, ax = plt.subplots(2, 2, figsize=(5.5, 4), width_ratios=[1, 1])
+        for idx, dataset in enumerate(datasets):
             axh_plot = False
             for retriever in retrievers:
                 df_filtered = df[(df['model'] == model) & (df['retriever'] == retriever) & (df['dataset'] == dataset)]
@@ -49,36 +49,48 @@ def main():
                     print(f"Could not find data for {dataset}, {model}, {retriever}, skipping...")
                     continue
                 print(f"Plotting {model}, {retriever}, {dataset}...")
+                ax_x = subplot_indices[dataset][0]
+                ax_y = subplot_indices[dataset][1]
                 if not axh_plot:  # plot the no-context and gold lines
                     no_context_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'no-context')]["em_rec_mean"].values[0]
-                    ax[ax_num].axhline(y=no_context_acc, color='red', linestyle='--', label='No Context')
+                    ax[ax_x][ax_y].axhline(y=no_context_acc, color=colors[3], linestyle='--', label='No Context')
                     gold_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'gold')]["em_rec_mean"].values[0]
-                    ax[ax_num].axhline(y=gold_acc, color='green', linestyle='--', label='Gold')
+                    ax[ax_x][ax_y].axhline(y=gold_acc, color=colors[2], linestyle='--', label='Gold')
                     axh_plot = True
-                # print(df_filtered['condition'])
-                # print(df_filtered[acc_keys[dataset]])
-                ax[ax_num].plot(df_filtered['condition'], df_filtered["em_rec_mean"], color=ret_colors[retriever], label=retriever)
-                ax[ax_num].scatter(df_filtered['condition'], df_filtered["em_rec_mean"], color=ret_colors[retriever])
+
+                # plot em rec mean with error bars
+                x = np.array(df_filtered['condition'])
+                m = np.array(df_filtered['em_rec_mean'])
+                yerr = np.stack([df_filtered['em_rec_ci_lower'], df_filtered['em_rec_ci_upper']], axis=0)
+                ax[ax_x][ax_y].errorbar(x, m, yerr=abs(yerr - m), label=retriever)
+
+                if dataset == 'nq-nocite':
+                    ax[ax_x][ax_y].set_title("NQ (No Citations)")
+                else:
+                    ax[ax_x][ax_y].set_title(f'{dataset.upper()}')
 
                 acc_label = 'EM Recall'
-                if dataset == 'qampari':
-                    acc_label += " -5"
-                ax[ax_num].set_ylabel(acc_label, fontsize=16)
-                ax[ax_num].set_xlabel('k', fontsize=16)
-                ax[ax_num].tick_params(labelsize=12)
-                ax[ax_num].set_title(f'{dataset.upper()}', fontsize=18)
+                if ax_y == 0:  # only show y-axis label on the left column
+                    ax[ax_x][ax_y].set_ylabel(acc_label)
 
-                if ax_num == 2:  # only want one legend
-                    ax[ax_num].legend(bbox_to_anchor=(1.0, 1.0), loc='upper left', fontsize=12)
-                else:  # remove the legend for the other plots
-                    ax[ax_num].legend().remove()
-    
+                if ax_x == 1:  # only show x-axis label on the bottom row
+                    ax[ax_x][ax_y].set_xlabel('k')
+
+                if shared_y:
+                    ax[ax_x][ax_y].set_ylim(0, 90)
+
+        # legend with only labels from first plot (top left)
+        handles, labels = ax[0][0].get_legend_handles_labels()
+        fig.legend(handles, labels, loc='lower center', ncol=4)
 
         # Save the figure to an output file
         fig.tight_layout()
-        figname = f'plots/ndoc-reader-acc-{model}.png'
-        plt.savefig(figname)
+        plt.subplots_adjust(bottom=0.17)  # fix overlap with x axis label
 
+        figname = f'plots/ndoc-reader-acc-{model}.png'
+        if shared_y:
+            figname = f'plots/ndoc-reader-acc-{model}-shared-y.png'
+        plt.savefig(figname)
 
 
 if __name__ == "__main__":

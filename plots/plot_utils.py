@@ -66,21 +66,30 @@ def load_metric_ndoc_files(datasets, models, retrievers, conditions, subfolder=N
         for model in models:
             for retriever in retrievers:
                 for cond in conditions:
-                    extra_fields = {'dataset': dataset,
-                                    'model': model,
-                                    'retriever': retriever,
-                                    'condition': cond}
-                    file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*ndoc{cond}-*{retriever}*score')
-                    # if len(list(file_iter)) == 0:
-                    #     print(f"Could not find files for {dataset}, {model}, {retriever}, {cond}")
+                    extra_fields = {
+                        'dataset': dataset,
+                        'model': model,
+                        'retriever': retriever,
+                        'condition': cond
+                    }
+
+                    if dataset == 'nq-nocite':
+                        temp_dataset = 'nq'
+                        file_iter = pathlib.Path(base_path).rglob(f'{temp_dataset}-{model}-*shot0-ndoc{cond}-*{retriever}*mean-ci.score')
+                    else:
+                        file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*shot[1,2]-ndoc{cond}-*{retriever}*score')
+                    
                     for f in file_iter:
                         fstr = str(f)
                         file_list.append(fstr)
                         field_list.append(extra_fields)
 
             for s_cond in ['gold', 'no-context', 'closedbook']:
-
-                file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*-{s_cond}*score')
+                if dataset == 'nq-nocite':
+                    temp_dataset = 'nq'
+                    file_iter = pathlib.Path(base_path).rglob(f'{temp_dataset}-{model}-*shot0-*-{s_cond}*mean-ci.score')
+                else:   
+                    file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*shot[1,2]*-{s_cond}*mean-ci.score')
                 if s_cond == 'closedbook':
                     s_cond = 'no-context'  # rename for consistency
                 extra_fields = {
@@ -91,8 +100,48 @@ def load_metric_ndoc_files(datasets, models, retrievers, conditions, subfolder=N
                 }
                 for f in file_iter:
                     fstr = str(f)
+                    if dataset == 'nq' and model == 'Llama':
+                        print(fstr)
                     file_list.append(fstr)
                     field_list.append(extra_fields)
+
+    return file_list, field_list
+
+def load_metric_noise_files(datasets, models, retrievers, conditions, subfolder=None):
+    """
+    Utility that will find all the .score files for reporting reader recall with noise added to the retriever.
+    """
+    base_path = RESULTS_PATH + '/reader' if subfolder is None else RESULTS_PATH + f'/reader/{subfolder}/'
+    field_list = []
+    file_list = []
+
+    for dataset in datasets:
+        for model in models:
+            for retriever in retrievers:
+                for cond in conditions:
+                    extra_fields = {'dataset': dataset,
+                                    'model': model,
+                                    'retriever': retriever,
+                                    'condition': cond}
+                    file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}*{retriever}*noise-{cond}*mean-ci.score')
+                    for f in file_iter:
+                        fstr = str(f)
+                        file_list.append(fstr)
+                        field_list.append(extra_fields)
+
+                # need gold alone and retriever alone
+                file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*-{retriever}*mean-ci.score')
+                extra_fields = {
+                    'dataset': dataset,
+                    'model': model,
+                    'retriever': retriever,
+                    'condition': 0
+                }
+                for f in file_iter:
+                    fstr = str(f)
+                    if '-noise-' not in fstr:
+                        file_list.append(fstr)
+                        field_list.append(extra_fields)
 
     return file_list, field_list
 

@@ -1,14 +1,12 @@
 import argparse
-import gc
-import json
-import os, sys
+import sys
 import logging
 import yaml
 
 # import indexing functions for all retrievers
 from retriever.ret_utils import *
 from utils import InvalidArgument, IncompleteSetup
-from file_utils import save_json, load_json, save_pickle, load_pickle
+from file_utils import load_json
 
 DATA_PATH = os.environ.get("DATA_PATH")
 DATASET_PATH = os.environ.get("DATASET_PATH")
@@ -21,14 +19,12 @@ def colbert_build_index(
         config,
         model_dir,
         doc_dataset,
-        doc_dataset_path,
-        logger
+        doc_dataset_path
 ):
     """
     Builds colbert index with colbertv2.0 for doc dataset
     """
     from colbert import Indexer
-    import faiss
 
     indexer = Indexer(
         checkpoint=model_dir,
@@ -37,7 +33,7 @@ def colbert_build_index(
     indexer.index(
         name=doc_dataset,
         collection=doc_dataset_path,
-        overwrite = 'reuse'
+        overwrite='reuse'
     )
 
 
@@ -69,13 +65,11 @@ def colbert_retrieval(
         COLBERT_MODEL_PATH,
         'colbertv2.0/'
     )
-    # TODO: remove hacky workaround to file path issues
-    #query_path = os.path.join(  # path to input query tsv 
-    #    DATASET_PATH,
-    #    query_dataset,
-    #    "queries.tsv"
-    #)
-    query_path = "/export/data/vyvo/rag/datasets/bioasq-queries.tsv" 
+    query_path = os.path.join(  # path to input query tsv
+       DATASET_PATH,
+       query_dataset,
+       "queries.tsv"
+    )
     doc_path = os.path.join(
         DATASET_PATH,
         doc_dataset,
@@ -112,7 +106,6 @@ def colbert_retrieval(
             model_path,
             doc_dataset,
             doc_path,
-            logger
         )
 
         logger.info("Indexing complete")
@@ -182,8 +175,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Passage retrieval.")
     parser.add_argument("--config", type=str, default=None, help="name of config file in retriever/configs/")
-    parser.add_argument("--k", default=100, help="Number of nearest neighbors to retrieve, or 'all'")
-    parser.add_argument("--retriever", type=str, help="options: colbert/dense")
+    parser.add_argument("--k", default=100, type=int, help="Number of nearest neighbors to retrieve, or 'all'")
     parser.add_argument("--query_file", type=str, help="path to the data file with queries")
     parser.add_argument("--query_dataset", type=str, help="query dataset name -> options: nq")
     parser.add_argument("--doc_dataset", type=str, help="dataset name -> options: kilt_wikipedia/// ")

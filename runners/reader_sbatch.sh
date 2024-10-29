@@ -1,10 +1,8 @@
 #!/bin/bash
-#SBATCH --job-name=reader_k
-#SBATCH --partition=gpu-p
+#SBATCH --job-name=readnq-colbert
 #SBATCH --nodes=1
-#SBATCH --gres=gpu:4
-#SBATCH --exclusive
 #SBATCH -t 3-0
+#SBATCH -o logs/reader_ndoc/%x-%A_%a.out
 
 
 ###
@@ -18,12 +16,21 @@
 source setup/set_paths.sh
 set -x
 
-karray=(1 2 3 4 5 10 20)
+karray=(1 2 3 4 5 10 20 100)
 k=${karray[$SLURM_ARRAY_TASK_ID]}
 
 python3 reader/run.py \
-    --config bioasq_mistral-7b-instruct_shot0_ndoc5_svs_default.yaml \
-    --eval_file bioasq_retrieval-bge-base-dense.json \
-    --ndoc ${k} \
-&>> logs/log_reader_bioasq_bge-base_k${k}.txt
+    --config nq_mistral-7b-instruct_shot2_colbert_default.yaml \
+    --prompt_file nq_default.json \
+    --shot 0 \
+    --eval_file nq_retrieval-colbert.json \
+    --ndoc ${k}
 
+#if [ $SLURM_ARRAY_TASK_ID -eq 6 ]; then
+#    python3 reader/run.py \
+#        --config nq_llama-2-7b-chat_shot1_gold_default.yaml \
+#        --prompt_file nq_default.json \
+#        --shot 0 \
+#        --eval_file nq_gold.json \
+#        --ndoc 5
+#fi

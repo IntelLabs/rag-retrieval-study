@@ -55,17 +55,18 @@ def load_metric_ci_files(datasets, models, conditions, subfolder=None):
                         field_list.append(extra_fields)
     return file_list, field_list
 
-def load_metric_ndoc_files(datasets, models, retrievers, conditions, subfolder=None):
+def load_metric_ndoc_files(datasets, models, retrievers, conditions):
     """
     Utility that will find all the .score files for reporting reader recall with n docs in prompt.
     """
-    base_path = RESULTS_PATH + '/reader' if subfolder is None else RESULTS_PATH + f'/reader/{subfolder}/'
+    res_path = RESULTS_PATH + '/reader'
     field_list = []
     file_list = []
     for dataset in datasets:
         for model in models:
             for retriever in retrievers:
                 for cond in conditions:
+                    base_path = res_path + f'/{dataset}_ndoc/'
                     extra_fields = {
                         'dataset': dataset,
                         'model': model,
@@ -77,7 +78,7 @@ def load_metric_ndoc_files(datasets, models, retrievers, conditions, subfolder=N
                         temp_dataset = 'nq'
                         file_iter = pathlib.Path(base_path).rglob(f'{temp_dataset}-{model}-*shot0-ndoc{cond}-*{retriever}*mean-ci.score')
                     else:
-                        file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*shot[1,2]-ndoc{cond}-*{retriever}*score')
+                        file_iter = pathlib.Path(base_path).rglob(f'{dataset}-{model}-*shot[1,2]-ndoc{cond}-*{retriever}*mean-ci.score')
                     
                     for f in file_iter:
                         fstr = str(f)

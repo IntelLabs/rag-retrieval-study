@@ -14,7 +14,7 @@ def main():
     percentiles = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
     # grab the files and generate data frames
-    print("Loading data from ndoc experiments...")
+    print("Loading data from noise experiments...")
     file_list, field_list = plot_utils.load_metric_noise_files(
         datasets, models, retrievers, conditions=percentiles, subfolder="noise"
     )

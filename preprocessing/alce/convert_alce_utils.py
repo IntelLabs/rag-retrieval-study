@@ -56,6 +56,27 @@ def add_gold_to_eval(input_list, gold_data, logger=None):
         cur["output"] = to_add
         cur['answer'] = gold_data[i]['answer']
         output_data.append(cur)
+    return output_data
+
+
+def gen_dpr_wiki_jsonl(input_file, logger=None):
+    """
+    convert dpr wiki split (used by alce as docs) to format used to generate vectors for svs retrieval
+    should be saved as docs.jsonl
+    """
+    df = pd.read_csv(input_file, sep='\t')
+    if logger:
+        logger.info("Converting raw tsv into desired jsonl format...")
+    output_data = []
+    for ind in df.index:
+        doc_id = df['id'][ind]
+        doc_text = df['text'][ind]
+
+        output_dict = {}
+        output_dict['id'] = int(doc_id)
+        output_dict['text'] = str(doc_text)
+        output_data.append(output_dict)
+    return output_data
 
 
 def gen_dpr_id2title(input_file, logger=None):
@@ -65,7 +86,7 @@ def gen_dpr_id2title(input_file, logger=None):
     """
     df = pd.read_csv(input_file, sep='\t')
     if logger:
-        logger.info("Processing raw tsv...")
+        logger.info("Generating id2title...")
     output_data = []
     for _, row in tqdm(df.iterrows()):
         curr_dict = {}

@@ -50,7 +50,7 @@ def main():
     )
     save_json(output_eval, output_file, logger)
 
-    # generate dpr id2title json for svs retrieval with qampari and asqa
+    # load raw dpr wiki data
     dpr_input_file = os.path.join(
         DATASET_PATH,
         "dpr_wiki",
@@ -58,6 +58,16 @@ def main():
     )
     logger.info(f"Reading input file {input_file}")
 
+    # convert dpr wiki split (used by alce as docs) to format used to generate vectors for svs
+    output_file = convert_alce_utils.gen_dpr_wiki_jsonl(dpr_input_file, logger)
+    output_file = os.path.join(
+        DATASET_PATH,
+        "dpr_wiki",
+        "docs.jsonl"
+    )
+    save_jsonl(output_file, output_file, logger)
+
+    # generate dpr id2title json for svs retrieval with qampari and asqa
     dpr_id2title = convert_alce_utils.gen_dpr_id2title(dpr_input_file)
 
     output_file = os.path.join(
@@ -66,8 +76,6 @@ def main():
         "id2title.jsonl"
     )
     save_jsonl(dpr_id2title, output_file, logger)
-
-
 
 
 if __name__ == "__main__":

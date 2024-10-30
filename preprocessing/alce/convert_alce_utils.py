@@ -94,3 +94,25 @@ def gen_dpr_id2title(input_file, logger=None):
         curr_dict["title"] = str(row["title"])
         output_data.append(curr_dict)
     return output_data
+
+
+def gen_colbert_queries(input_dict, dataset, logger=None):
+    """
+    convert alce queries to ColBERT format: .tsv with id and passage (no header)
+    """
+    output_dict = {}
+    output_dict['id'] = []
+    output_dict['query_text'] = []
+
+    if logger:
+        logger.info("Converting ALCE queries to ColBERT format...")
+    for entry in input_dict:
+        if dataset == 'asqa':
+            query_id = entry['sample_id']
+        else:
+            query_id = entry['id']
+        query_text = entry['question']
+        output_dict['id'].append(query_id)
+        output_dict['query_text'].append(query_text)
+
+    return output_dict

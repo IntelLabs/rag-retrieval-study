@@ -1,4 +1,5 @@
-from file_utils import load_json, save_json
+from file_utils import load_json
+import convert_alce_utils
 
 import os
 import pandas as pd
@@ -19,24 +20,14 @@ def main(args):
         2. convert dpr wiki split (used by alce as docs) to ColBERT format: .tsv with id and passage (no header)
     """
 
+    # convert alce queries to ColBERT format
     input_file = os.path.join(
         DATASET_PATH,
         args.dataset,
         "raw.json"
     )
     input_dict = load_json(input_file, logger)
-    output_dict = {}
-    output_dict['id'] = []
-    output_dict['query_text'] = []
-
-    for entry in input_dict:
-        if args.dataset == 'asqa':
-            query_id = entry['sample_id']
-        else:
-            query_id = entry['id']
-        query_text = entry['question']
-        output_dict['id'].append(query_id)
-        output_dict['query_text'].append(query_text)
+    output_dict = convert_alce_utils.gen_colbert_queries(input_dict, args.dataset, logger)
 
     output_file = os.path.join(
         DATASET_PATH,

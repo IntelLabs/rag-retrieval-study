@@ -9,27 +9,24 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 """
-Adds gold info to asqa and qampari eval file for evaluating retriever performance
+Adds gold info to asqa and qampari alce eval file for evaluating retriever performance
 """
+
 
 def main(args):
     DATA_PATH = os.environ.get("DATA_PATH")
     input_path = os.path.join(
-        DATA_PATH, 
+        DATA_PATH,
         args.f
     )
 
     input_data = load_json(input_path, logger)
 
     gold_path = os.path.join(
-        DATA_PATH, 
+        DATA_PATH,
         f"{(args.dataset).lower()}_gold.json"
     )
     gold_data = load_json(gold_path, logger)
-
-    # if len(input_data) != len(gold_data):
-    #     raise Exception("len(input_data) != len(gold_data)")
-    
 
     output_data = []
     logger.info("Processing data")
@@ -47,6 +44,7 @@ def main(args):
         output_data.append(cur)
 
     save_json(output_data, input_path)  # overwrite old file
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

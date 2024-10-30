@@ -8,8 +8,10 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 """
-Change sample_id to id in asqa eval files
+Change "sample_id" key to "id" in alce-provided asqa eval files for consistency with other eval files
 """
+
+
 def main(args):
 
     DATA_PATH = os.environ.get("DATA_PATH")

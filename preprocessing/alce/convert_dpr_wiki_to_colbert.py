@@ -10,11 +10,12 @@ convert dpr wiki split (used by alce as docs) to ColBERT format: .tsv with id an
 """
 DATASET_PATH = os.environ.get("DATASET_PATH")
 
+
 def main():
     input_file = os.path.join(
         DATASET_PATH,
         "dpr_wiki",
-        "raw.tsv"
+        "raw.tsv"  # dpr wiki split used by alce as docs
     )
     logger.info(f"Reading input file {input_file}")
     df = pd.read_csv(input_file, sep='\t')
@@ -28,5 +29,5 @@ def main():
     df.to_csv(output_file, sep="\t", header=False, index=False) 
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     main()

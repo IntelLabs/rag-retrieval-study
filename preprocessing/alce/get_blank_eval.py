@@ -9,15 +9,17 @@ logger.setLevel(logging.INFO)
 
 """
 script for removing 'docs' key from original alce data files (quampari and asqa)
+may be used to add custom retrieval results to the original alce eval files
 """
 DATASET_PATH = os.environ.get("DATASET_PATH")
 DATA_PATH = os.environ.get("DATA_PATH")
+
 
 def main(args):
     input_file = os.path.join(
         DATASET_PATH,
         args.dataset,
-        "raw.json"
+        "raw.json"  # original .json alce eval file
     )
     input_list = load_json(input_file, logger)
     output_list = []
@@ -27,12 +29,12 @@ def main(args):
 
     output_file = os.path.join(
         DATA_PATH,
-        f"{args.dataset}_eval.json"  # "qampari_eval.json",
+        f"{args.dataset}_eval.json"
     )
     save_json(output_list, output_file, logger)
 
 
-if __name__ == "__main__": 
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, help="Dataset to remove docs key from")
     args = parser.parse_args()

@@ -1,3 +1,8 @@
+# Output figures
+*.png
+*.pdf
+*.fig
+
 # Ignore changes to jupyter notebooks
 */*.ipynb
 

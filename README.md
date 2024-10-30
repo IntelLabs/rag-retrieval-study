@@ -35,6 +35,14 @@ To calculate evaluation scores for LLM outputs, you will also need `rouge-score`
 
 ## Data
 
+To download ASQA and QAMPARI datasets, as well as the DPR wikipedia snapshot used for retrieved documents, please refer to the original [ALCE repository](https://github.com/princeton-nlp/ALCE). After downloading this data, the ALCE .json files and DPR wikipedia .tsv files can be converted to the formats needed for running retrieval with SVS (Scalable Vector Search) by running:
+
+```bash
+python preprocessing/alce/convert_alce_data.py --dataset {asqa/qampari}
+```
+Note that the DPR wikipedia split will need to be vectorized prior to running retrieval with SVS. 
+
+
 
 ## Retriever
 

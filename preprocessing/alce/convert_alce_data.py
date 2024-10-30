@@ -13,7 +13,7 @@ DATASET_PATH = os.environ.get("DATASET_PATH")
 DATA_PATH = os.environ.get("DATA_PATH")
 
 
-def main():
+def main(args):
     """
     convert ALCE dataset eval files (asqa, qampari) to format used for retrieval and retrieval eval
     creates id2title.jsonl for svs retrieval

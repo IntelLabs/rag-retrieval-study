@@ -50,8 +50,6 @@ def main(args):
     logger.info(f"Writing output file {output_file}")
     df.to_csv(output_file, sep="\t", header=False, index=False) 
 
-
-
     # convert_dpr_wiki_to_colbert
     input_file = os.path.join(
         DATASET_PATH,

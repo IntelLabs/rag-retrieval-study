@@ -38,7 +38,8 @@ def main(args):
     input_eval = convert_alce_utils.get_blank_eval(input_eval, logger)
 
     # convert 'sample_id' to 'id' in asqa eval files
-    input_eval = convert_alce_utils.fix_asqa_id(input_eval, logger)
+    if args.dataset == 'asqa':
+        input_eval = convert_alce_utils.fix_asqa_id(input_eval, logger)
 
     # add gold info to asqa and qampari alce eval file for evaluating retriever performance
     output_eval = convert_alce_utils.add_gold_to_eval(input_eval, gold_data, logger)

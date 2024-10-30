@@ -34,10 +34,9 @@ def main():
     # a plot for each retriever/model combination
     print('\n\nGenerating plots...')
     for model in models:
-        # fig, ax = plt.subplots(nrows=1, ncols=3, figsize=(15, 3.2))
         fig, ax = plt.subplots(2, 2, figsize=(5.5, 4), width_ratios=[1, 1])
-        for idx, dataset in enumerate(datasets):
-            axh_plot = False
+        for dataset in datasets:
+            axh_plotted = False  # flag to plot the no-context and gold lines (only once per dataset)
             for retriever in retrievers:
                 df_filtered = df[(df['model'] == model) & (df['retriever'] == retriever) & (df['dataset'] == dataset)]
                 if len(df_filtered) == 0:
@@ -46,12 +45,12 @@ def main():
                 print(f"Plotting {model}, {retriever}, {dataset}...")
                 ax_x = subplot_indices[dataset][0]
                 ax_y = subplot_indices[dataset][1]
-                if not axh_plot:  # plot the no-context and gold lines
+                if not axh_plotted:  # plot the no-context and gold lines
                     no_context_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'no-context')]["em_rec_mean"].values[0]
                     ax[ax_x][ax_y].axhline(y=no_context_acc, color=colors[3], linestyle='--', label='No Context')
                     gold_acc = df[(df['model'] == model) & (df['dataset'] == dataset) & (df['condition'] == 'gold')]["em_rec_mean"].values[0]
                     ax[ax_x][ax_y].axhline(y=gold_acc, color=colors[2], linestyle='--', label='Gold')
-                    axh_plot = True
+                    axh_plotted = True
 
                 # plot em rec mean with error bars
                 x = np.array(df_filtered['condition'])

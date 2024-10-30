@@ -17,6 +17,8 @@ logger.setLevel(logging.INFO)
 
 
 def main(input_file, output_prefix, corpus_path, title_json, text_key):
+    # Converts the NQ dataset, as obtained from the RAGGED repository (https://github.com/neulab/ragged), into the format needed for dense vector retrieval and evaluation of the retrieval results.
+
     query_data = load_jsonl(input_file, sort_by_id=False)
 
     # Query file needs fields: question, answer, id/sample_id, other metadata
@@ -142,11 +144,5 @@ if __name__ == '__main__':
 
     if 'kilt' in args['corpus_path']:
         text_key = 'paras'
-    elif 'pubmed' in args['corpus_path']:
-        text_key = 'contents'
-    elif 'qasper' in args['corpus_path']:
-        text_key = 'text'
-    else:
-        raise NotImplementedError('Expected either the kilt, pubmed, or qasper corpus. Has not been verified to work with others!')
 
     main(**args, text_key=text_key)

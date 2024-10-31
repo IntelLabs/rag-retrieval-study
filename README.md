@@ -97,12 +97,13 @@ To generate 10 noisy docs in each percentile of neighbors for each query, add th
 
 ## Reader
 
-There are existing config files in reader/configs or you can create your own. You may also override arguments in the config file with command line arguments or choose not to use config files and specify everything
-via command line arguments. 
+There are existing config files in reader/configs or you can create your own. You may also override arguments in the config file with command line arguments or choose not to use config files and specify everything via command line arguments. 
 
 ```bash
 python reader/run.py --config {config_name}
 ```
+
+Bash files for looping over various numbers of documents included in the prompt and evaluating the results can be found in `runners/ndoc_asqa_mistral_reader.sh` and `runners/ndoc_asqa_mistral_eval_looper.sh`. 
 
 ### Noise experiments
 The process for performing experiments with adding noisy documents to gold and retrieved documents in the interest of replicating performance gains observed in [The Power of Noise](https://arxiv.org/abs/2401.14887) is outlined here. 
@@ -114,6 +115,8 @@ Using the ```--noise_experiment``` tag in the retrieval step described in [Retri
 python3 reader/run.py --config {config_name} --noise_file {noise_name}
 ```
 By default, the noisy documents will be added to the prompt after the retrieved or gold documents. To switch this order, use the ```--noise_first``` flag. You can switch between adding noise to the gold and retrieved documents by changing the `config_name`. 
+
+Bash files for running and evaluating this experiment can be found at `runners/noise_percentile_asqa_mistral_gold_reader.sh` and `runners/noise_percentile_asqa_mistral_gold_eval.sh`. 
 
 
 ## First 100 neighbors experiments
@@ -128,6 +131,8 @@ Note that gold documents are omitted from this set. You can then run experiments
 ```bash
 python3 reader/run.py --config {config_name} --noise_file {noise_name}
 ```
+
+Bash files for running and evaluating this experiment can be found at `runners/first100_asqa_mistral_bge-base_reader.sh` and `runners/first100_asqa_mistral_bge-base_eval.sh`.
 
 ### Reader evaluation
 

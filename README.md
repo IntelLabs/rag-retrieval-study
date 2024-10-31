@@ -19,7 +19,7 @@ To run the reader portion of the RAG pipeline, i.e. LLM inference, please instal
 To calculate evaluation scores for LLM outputs, you will also need `rouge-score`, and `scipy`.
 
 ## Code Structure
-* `setup`: directory containing scripts for downloading data and setting env variables
+* `setup`: directory containing script for setting env variables
 * `retriever`: directory containing scripts and files for retrieval and retriever eval
   * `configs`: config files for different retrieval settings
   * `index.py`: index datasets before or during retrieval step
@@ -33,7 +33,9 @@ To calculate evaluation scores for LLM outputs, you will also need `rouge-score`
 * `tools/`: misc code (generate summaries/snippets, reranking, etc.)
 
 
-## Data
+## Setup
+
+### Download Data
 
 To download ASQA and QAMPARI datasets, as well as the DPR wikipedia snapshot used for retrieved documents, please refer to the original [ALCE repository](https://github.com/princeton-nlp/ALCE). After downloading this data, the ALCE .json files and DPR wikipedia .tsv files can be converted to the formats needed for running retrieval with SVS (Scalable Vector Search) by running:
 
@@ -52,6 +54,24 @@ For the NQ dataset and the KILT Wikipedia corpus that supports it, you may follo
 
 To preprocess the files for use with our dense retrieval code using SVS, run `preprocessing/convert_nq_dense.py` with the appropriate input arguments. 
 
+
+### Set Paths
+Before getting started, you must fill in the path variables `setup/set_paths.sh` for your environment
+
+```bash
+export DATA_PATH=  # directory containing all preprocessed eval files
+export INDEX_PATH=$DATA_PATH/indices  # directory to save indices for search/retrieval with SVS
+export VEC_PATH=$DATA_PATH/vectors  # path to document vectors for search/retrieval with SVS
+export DATASET_PATH=  # directory containing subdirectories (labelled with dataset name) containing raw downloaded data
+export RESULTS_PATH=  # location to save output from retriever and reader eval
+export COLBERT_MODEL_PATH=  # location where colbert model has been downloaded
+```
+
+then run with 
+
+```bash
+source setup/set_paths.sh
+```
 
 ## Retriever
 

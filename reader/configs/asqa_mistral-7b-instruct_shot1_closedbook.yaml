@@ -1,7 +1,8 @@
 ---
-prompt_file: asqa_cite.json
-eval_file: asqa_retrieval-bge-large-dense.json
-shot: 2
+prompt_file: asqa_closedbook.json
+eval_file: asqa_eval_gold.json
+shot: 1
+ndoc: 0
 dataset_name: asqa
 model: mistralai/Mistral-7B-Instruct-v0.3
 temperature: 1.0

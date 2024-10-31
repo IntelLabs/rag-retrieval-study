@@ -677,6 +677,6 @@ if __name__ == "__main__":
     parser.add_argument("--noise_first", action="store_true", help="In the prompt, if random noisy documents should precede retrieved or gold passages")
     parser.add_argument("--noise_file", type=str, default=None, help="File from which noisy documents were added")
 
-
+ 
     args = parser.parse_args()
     main(args)

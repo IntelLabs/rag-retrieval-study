@@ -1,0 +1,9 @@
+---
+prompt_file: qampari_cite.json
+eval_file: qampari_retrieval-bge-large-dense.json
+shot: 2
+dataset_name: qampari
+model: mistralai/Mistral-7B-Instruct-v0.3
+temperature: 1.0
+top_p: 0.95
+max_length: 32768

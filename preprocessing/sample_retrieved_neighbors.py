@@ -45,7 +45,6 @@ def main(args):
 
     bin_list = []
     logger.info("Creating")
-
     # Create "bin0" which has nearest neighbors 5-10
     bin = []
     for item in tqdm(retrieved_results):

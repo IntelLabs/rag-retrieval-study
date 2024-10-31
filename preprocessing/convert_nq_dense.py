@@ -17,7 +17,11 @@ logger.setLevel(logging.INFO)
 
 
 def main(input_file, output_prefix, corpus_path, title_json, text_key):
-    # Converts the NQ dataset, as obtained from the RAGGED repository (https://github.com/neulab/ragged), into the format needed for dense vector retrieval and evaluation of the retrieval results.
+    """
+    Converts the NQ dataset, as obtained from the RAGGED repository (https://github.com/neulab/ragged), into the format needed for dense vector retrieval and evaluation of the retrieval results.
+
+    The 'text_key' input variable here is the dataset dictionary key that contains the text. If you wish to use one of the other datasets from the RAGGEd repository, e.g. bioASQ, you can alter that here.
+    """
 
     query_data = load_jsonl(input_file, sort_by_id=False)
 
@@ -128,21 +132,19 @@ if __name__ == '__main__':
     #   --title_json /export/data/vyvo/rag/datasets/kilt_wikipedia/kilt_wikipedia_jsonl/id2title.jsonl
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input_file', type=str)
-    parser.add_argument('--output_prefix', type=str)
-    parser.add_argument('--corpus_path', type=str)
-    parser.add_argument('--title_json', type=str)
+    parser.add_argument('-d', '--dataset', type=str, required=True, help="Name of query dataset to process. Expected to follow the RAGGED data format (see README)")
+    parser.add_argument('--corpus_path', type=str, required=True, help="Where the corpus dataset is stored. Can be the HuggingFace dataset folder, or can be the JSON file dump of the corpus.")
+    parser.add_argument('--title_json', type=str, required=True, help="The path to the corpus ID to title mapping file, id2title.jsonl")
 
-    args = vars(parser.parse_args())
-    DATA_PATH = os.environ.get("DATA_PATH")
-    args['output_prefix'] = f'{DATA_PATH}/{args["output_prefix"]}'
-
+    args = parser.parse_args()
     print(args)
+
+    DATASET_PATH = os.environ.get("DATASET_PATH")
+    input_file = f'{DATASET_PATH}/{args.dataset}.jsonl'
+    output_prefix = f'{DATASET_PATH}/{args.dataset}'
 
     # Allow large datasets to be entirely held in memory
     datasets.config.IN_MEMORY_MAX_SIZE = 600 * 1e9
 
-    if 'kilt' in args['corpus_path']:
-        text_key = 'paras'
+    main(input_file, output_prefix, args.corpus_path, args.title_json, text_key='contents')
 
-    main(**args, text_key=text_key)

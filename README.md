@@ -19,7 +19,7 @@ To run the reader portion of the RAG pipeline, i.e. LLM inference, please instal
 To calculate evaluation scores for LLM outputs, you will also need `rouge-score`, and `scipy`.
 
 ## Code Structure
-* `setup`: directory containing scripts for downloading data and setting env variables
+* `setup`: directory containing script for setting env variables
 * `retriever`: directory containing scripts and files for retrieval and retriever eval
   * `configs`: config files for different retrieval settings
   * `index.py`: index datasets before or during retrieval step
@@ -32,10 +32,12 @@ To calculate evaluation scores for LLM outputs, you will also need `rouge-score`
   * `eval.py`: eval file to evaluate generations.
 * `tools/`: misc code (generate summaries/snippets, reranking, etc.)
 
+## Setup
 
-## Data
+### Download Data
 
 To download ASQA and QAMPARI datasets, as well as the DPR wikipedia snapshot used for retrieved documents, please refer to the original [ALCE repository](https://github.com/princeton-nlp/ALCE). After downloading this data, create `asqa`, `qampari`, and `dpr_wiki` subdirectories in the location specified by the `DATASET_PATH` environment variable. Place one (it doesn't matter which) corresponding .json eval file in the `asqa` and `qampari` directories, respectively. Rename these files `raw.json`. Rename the downloaded dpr wikipedia dump `raw.tsv` and place it in the `dpr_wiki` subdirectory. Rename the oracle files included in the ALCE data `asqa_gold.json` and `qampari_gold.json`. Move them to the location specified by the `DATA_PATH` environment variable. Finally, the renamed ALCE .json files and DPR wikipedia .tsv file can be converted to the formats needed for running retrieval with SVS (Scalable Vector Search) by running:
+
 
 ```bash
 python preprocessing/alce/convert_alce_dense.py --dataset {asqa/qampari}
@@ -50,8 +52,25 @@ python preprocessing/alce/convert_alce_colbert.py --dataset {asqa/qampari}
 
 For the NQ dataset and the KILT Wikipedia corpus that supports it, you may follow the dataset download instructions as provided by original [RAGGED repository](https://github.com/neulab/ragged). This includes downloading the preprocessed corpus on [HuggingFace](https://huggingface.co/datasets/jenhsia/ragged). The original repository also provides tools to convert the data for use with ColBERT.
 
-To preprocess the files for use with our dense retrieval code using SVS, run `preprocessing/convert_nq_dense.py` with the appropriate input arguments. 
+To preprocess the files for use with our dense retrieval code using SVS, run `preprocessing/convert_nq_dense.py` with the appropriate input arguments.
 
+### Set Paths
+Before getting started, you must fill in the path variables `setup/set_paths.sh` for your environment
+
+```bash
+export DATA_PATH=  # directory containing all preprocessed eval files
+export INDEX_PATH=$DATA_PATH/indices  # directory to save indices for search/retrieval with SVS
+export VEC_PATH=$DATA_PATH/vectors  # path to document vectors for search/retrieval with SVS
+export DATASET_PATH=  # directory containing subdirectories (labelled with dataset name) containing raw downloaded data
+export RESULTS_PATH=  # location to save output from retriever and reader eval
+export COLBERT_MODEL_PATH=  # location where colbert model has been downloaded
+```
+
+then run with 
+
+```bash
+source setup/set_paths.sh
+```
 
 ## Retriever
 
@@ -97,12 +116,13 @@ To generate 10 noisy docs in each percentile of neighbors for each query, add th
 
 ## Reader
 
-There are existing config files in reader/configs or you can create your own. You may also override arguments in the config file with command line arguments or choose not to use config files and specify everything
-via command line arguments. 
+There are existing config files in reader/configs or you can create your own. You may also override arguments in the config file with command line arguments or choose not to use config files and specify everything via command line arguments. 
 
 ```bash
 python reader/run.py --config {config_name}
 ```
+
+Bash files for looping over various numbers of documents included in the prompt and evaluating the results can be found in `runners/ndoc_asqa_mistral_reader.sh` and `runners/ndoc_asqa_mistral_eval_looper.sh`. 
 
 ### Noise experiments
 The process for performing experiments with adding noisy documents to gold and retrieved documents in the interest of replicating performance gains observed in [The Power of Noise](https://arxiv.org/abs/2401.14887) is outlined here. 
@@ -114,6 +134,8 @@ Using the ```--noise_experiment``` tag in the retrieval step described in [Retri
 python3 reader/run.py --config {config_name} --noise_file {noise_name}
 ```
 By default, the noisy documents will be added to the prompt after the retrieved or gold documents. To switch this order, use the ```--noise_first``` flag. You can switch between adding noise to the gold and retrieved documents by changing the `config_name`. 
+
+Bash files for running and evaluating this experiment can be found at `runners/noise_percentile_asqa_mistral_gold_reader.sh` and `runners/noise_percentile_asqa_mistral_gold_eval.sh`. 
 
 
 ## First 100 neighbors experiments
@@ -128,6 +150,8 @@ Note that gold documents are omitted from this set. You can then run experiments
 ```bash
 python3 reader/run.py --config {config_name} --noise_file {noise_name}
 ```
+
+Bash files for running and evaluating this experiment can be found at `runners/first100_asqa_mistral_bge-base_reader.sh` and `runners/first100_asqa_mistral_bge-base_eval.sh`.
 
 ### Reader evaluation
 

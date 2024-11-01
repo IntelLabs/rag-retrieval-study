@@ -147,4 +147,3 @@ if __name__ == '__main__':
     datasets.config.IN_MEMORY_MAX_SIZE = 600 * 1e9
 
     main(input_file, output_prefix, args.corpus_path, args.title_json, text_key='contents')
-

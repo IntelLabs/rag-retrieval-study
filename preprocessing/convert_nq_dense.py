@@ -141,7 +141,7 @@ if __name__ == '__main__':
 
     DATASET_PATH = os.environ.get("DATASET_PATH")
     input_file = f'{DATASET_PATH}/{args.dataset}.jsonl'
-    output_prefix = f'{DATASET_PATH}/{args.dataset}'
+    output_prefix = f'{DATA_PATH}/{args.dataset}'
 
     # Allow large datasets to be entirely held in memory
     datasets.config.IN_MEMORY_MAX_SIZE = 600 * 1e9

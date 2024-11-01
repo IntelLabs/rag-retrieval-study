@@ -32,12 +32,12 @@ To calculate evaluation scores for LLM outputs, you will also need `rouge-score`
   * `eval.py`: eval file to evaluate generations.
 * `tools/`: misc code (generate summaries/snippets, reranking, etc.)
 
-
 ## Setup
 
 ### Download Data
 
-To download ASQA and QAMPARI datasets, as well as the DPR wikipedia snapshot used for retrieved documents, please refer to the original [ALCE repository](https://github.com/princeton-nlp/ALCE). After downloading this data, the ALCE .json files and DPR wikipedia .tsv files can be converted to the formats needed for running retrieval with SVS (Scalable Vector Search) by running:
+To download ASQA and QAMPARI datasets, as well as the DPR wikipedia snapshot used for retrieved documents, please refer to the original [ALCE repository](https://github.com/princeton-nlp/ALCE). After downloading this data, create `asqa`, `qampari`, and `dpr_wiki` subdirectories in the location specified by the `DATASET_PATH` environment variable. Place one (it doesn't matter which) corresponding .json eval file in the `asqa` and `qampari` directories, respectively. Rename these files `raw.json`. Rename the downloaded dpr wikipedia dump `raw.tsv` and place it in the `dpr_wiki` subdirectory. Rename the oracle files included in the ALCE data `asqa_gold.json` and `qampari_gold.json`. Move them to the location specified by the `DATA_PATH` environment variable. Finally, the renamed ALCE .json files and DPR wikipedia .tsv file can be converted to the formats needed for running retrieval with SVS (Scalable Vector Search) by running:
+
 
 ```bash
 python preprocessing/alce/convert_alce_dense.py --dataset {asqa/qampari}
@@ -52,8 +52,7 @@ python preprocessing/alce/convert_alce_colbert.py --dataset {asqa/qampari}
 
 For the NQ dataset and the KILT Wikipedia corpus that supports it, you may follow the dataset download instructions as provided by original [RAGGED repository](https://github.com/neulab/ragged). This includes downloading the preprocessed corpus on [HuggingFace](https://huggingface.co/datasets/jenhsia/ragged). The original repository also provides tools to convert the data for use with ColBERT.
 
-To preprocess the files for use with our dense retrieval code using SVS, run `preprocessing/convert_nq_dense.py` with the appropriate input arguments. 
-
+To preprocess the files for use with our dense retrieval code using SVS, run `preprocessing/convert_nq_dense.py` with the appropriate input arguments.
 
 ### Set Paths
 Before getting started, you must fill in the path variables `setup/set_paths.sh` for your environment

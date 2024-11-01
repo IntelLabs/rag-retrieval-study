@@ -60,13 +60,13 @@ def main(args):
     logger.info(f"Reading input file {input_file}")
 
     # convert dpr wiki split (used by alce as docs) to format used to generate vectors for svs
-    output_file = convert_alce_utils.gen_dpr_wiki_jsonl(dpr_input_file, logger)
+    output_data = convert_alce_utils.gen_dpr_wiki_jsonl(dpr_input_file, logger)
     output_file = os.path.join(
         DATASET_PATH,
         "dpr_wiki",
         "docs.jsonl"
     )
-    save_jsonl(output_file, output_file, logger)
+    save_jsonl(output_data, output_file, logger)
 
     # generate dpr id2title json for svs retrieval with qampari and asqa
     dpr_id2title = convert_alce_utils.gen_dpr_id2title(dpr_input_file)
@@ -81,6 +81,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, help="ALCE dataset to compile eval files for: [asqa, qampari]")
+    parser.add_argument("-d", "--dataset", type=str, required=True, help="ALCE dataset to compile eval files for: [asqa, qampari]")
     args = parser.parse_args()
     main(args)
+   

@@ -81,6 +81,6 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--dataset", type=str, help="ALCE dataset to compile eval files for: [asqa, qampari]")
+    parser.add_argument("-d", "--dataset", type=str, required=True, help="ALCE dataset to compile eval files for: [asqa, qampari]")
     args = parser.parse_args()
     main(args)

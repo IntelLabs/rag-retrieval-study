@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 """
 After exhaustive search with a flat search index has been run, you will have files that contain the nearest neighbors
 for every single query.

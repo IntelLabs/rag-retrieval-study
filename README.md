@@ -91,13 +91,21 @@ Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings](https://hugg
 
 Alternatively, you can make more system-specific install configurations by following the [documentation here](https://intel.github.io/ScalableVectorSearch/).
 
-We have implemented similarity-based retrieval with either exact search or approximate nearest neighbor (ANN) search. Retriever configuration files for exact search are titled `dense_{DATASET}.yaml`, while approximate search parameters can be set in configuration files titled `dense_ann_{DATASET}.yaml`. Several of the parameters for building the ANN search graph can be modified to alter the search performance, but we have provided configurations that work well for those datasets.
+We have implemented similarity-based retrieval with either exact search or approximate nearest neighbor (ANN) search. Retriever configuration files for exact search are titled `dense_{DATASET}.yaml`. Any arguments passed to the `retrieval/run.py` script will override the parameters set in the configuration YAML file.
 
-#### Tuning search recall
-For some experiments, we have tuned the ANN search to achieve a specific accuracy compared to exact search. Therefore we have included a `preprocessing/create_ground_truth_calibration.py` script to save the results of exact search on a subset of the data.
+#### Search recall experiments
+For the approximate search experiments, we tuned the ANN search to achieve a specific accuracy compared to exact search. This requires a file that saves the results of the exact search, which is done in `preprocessing/create_ground_truth_calibration.py` script to save the results on a subset of the data.
+
+Approximate search parameters can be set in configuration files titled `dense_ann_{DATASET}.yaml`. Several of the parameters for building the ANN search index can be modified to alter the search performance, but we have provided configurations that work well for those datasets. If you leave the `calib_kwargs` parameter as-is, then SVS will run a calibration routine to estimate the search window size that reaches the target recall. Here are example commands to run the calibration at all the target search recalls given in the paper for the ASQA dataset:
+
+```bash
+python retrieval/run.py --config dense_ann_asqa.yaml --calib_kwargs '{"calib_prefix": asqa_bge-base-dense, "num_neighbors": 10, "target_recall": 0.7}'
+python retrieval/run.py --config dense_ann_asqa.yaml --calib_kwargs '{"calib_prefix": asqa_bge-base-dense, "num_neighbors": 10, "target_recall": 0.9}'
+python retrieval/run.py --config dense_ann_asqa.yaml --calib_kwargs '{"calib_prefix": asqa_bge-base-dense, "num_neighbors": 10, "target_recall": 0.95}'
+``` 
 
 #### Setting gold document recall
-For some experiments, we manipulated the set of context documents to achieve an exact number for average retrieval recall across the whole dataset of queries. This can be run with `preprocessing/set_gold_recall.py`.
+For some experiments, we manipulated the set of context documents to achieve an exact number for average retrieval recall across the whole dataset of queries. This can be run with `preprocessing/set_gold_recall.py`. The output will be a JSON file that you can pass into the reader LLM (see below).
 
 ### ColBERT-2.0 retriever -- very slight modifications from v.0.2.20
 The faiss package is required to run the ColBERT retriever.
@@ -128,10 +136,16 @@ python reader/run.py --config {config_name}
 
 Bash files for looping over various numbers of documents included in the prompt and evaluating the results can be found in `runners/ndoc_asqa_mistral_reader.sh` and `runners/ndoc_asqa_mistral_eval_looper.sh`. 
 
+### Search recall experiments
+Bash files for looping over the calibrated search recall results and the datasets shown in the paper can be found in `runners/search-recall_reader.sh` and `runners/search-recall_eval.sh`.
+
+### Gold document recall experiments
+Bash files for looping over the gold document recall retriever files and the datasets shown in the paper can be found in `runners/gold-recall_reader.sh` and `runners/gold-recall_eval.sh`.
+
 ### Noise experiments
 The process for performing experiments with adding noisy documents to gold and retrieved documents in the interest of replicating performance gains observed in [The Power of Noise](https://arxiv.org/abs/2401.14887) is outlined here. 
 
-## Noise percentile experiments
+### Noise percentile experiments
 Using the ```--noise_experiment``` tag in the retrieval step described in [Retriever evaluation](#retriever-evaluation) results in 10 noisy docs in each percentile of neighbors for each query. This is obtained by retrieving all documents for the query, resulting in an ordered list from most similar to least similar to the query. This is divided into ten equal bins. Random documents from each bin are exported to a noise file. This is implemented in `retriever/ret_utils.py`. For each resulting noise file, run:
 
 ```bash
@@ -141,8 +155,7 @@ By default, the noisy documents will be added to the prompt after the retrieved 
 
 Bash files for running and evaluating this experiment can be found at `runners/noise_percentile_asqa_mistral_gold_reader.sh` and `runners/noise_percentile_asqa_mistral_gold_eval.sh`. 
 
-
-## First 100 neighbors experiments
+### First 100 neighbors experiments
 To perform experiments with adding nearer neighbors to the gold and retrieved results run default retrieval to obtain an `eval_file`, then create new noise files for retrieved results 5-10 and 95-100 (for each query) by running: 
 
 ```bash

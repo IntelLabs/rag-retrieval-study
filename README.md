@@ -109,10 +109,11 @@ Details on these changes: We ran into OOM errors when using the original code. T
 ### Retriever evaluation
 To evaluate retrieval results use the following command:
 ```bash
-python retriever/eval.py --eval_file {eval_filename} --not_par_level
+python retriever/eval_per_query.py --eval_file {eval_filename} --not_par_level
 ```
-
 Use the ```--not_par_level``` flag for asqa, where the gold metadata is not separated into document-level and paragraph-level ids.
+
+To get 95% bootstrap confidence intervals on the retrieval results, use the ```--ci``` flag.
 
 To generate 10 noisy docs in each percentile of neighbors for each query, add the ```--noise_experiment``` tag. Note that this is only implemented for dense retrieval and has only been tested for asqa. 
 
@@ -158,24 +159,21 @@ Bash files for running and evaluating this experiment can be found at `runners/f
 
 ### Reader evaluation
 
-Accuracy on the QA task is implemented in run/eval.py. The evaluation code contains copies of functions from two RAG papers that previously used these datasets ([ALCE](https://github.com/princeton-nlp/ALCE) and [RAGGED](https://github.com/neulab/ragged)).
+We have two ways to run evaluation on the reader results. The `eval.py` script provides the overall mean, whereas the `eval_per_query.py` script provides the information needed to compute the confidence intervals (CIs) across dataset queries. The evaluation code contains copies of functions from two RAG papers that previously used these datasets ([ALCE](https://github.com/princeton-nlp/ALCE) and [RAGGED](https://github.com/neulab/ragged)).
 
-For ASQA and QAMPARI, use the following command
+The following command should run the evaluation:
 ```bash
-python reader/eval.py --f {result_file_name} --citations
+python reader/eval_per_query.py --f {result_file_name} --citations
 ```
 
-For nq and bioasq, use the following command. Note that an option to run this eval without bert is offered because it can be somewhat time consuming. 
-```bash
-python reader/eval.py --f {result_file_name} --citations --no_bert
-```
+The evaluation result will be saved in the RESULTS_PATH (default is `result/`), with the same name as the input and a suffix `.score`.
 
-The evaluation result will be saved in `result/`, with the same name as the input and a suffix `.score`.
+To compute 95% bootstrap confidence intervals on the reader evaluation results, you can use the `reader/compute_ci.py` script. The various input arguments are used to find the correct ```*perquery.score``` files in the results folder.
 
-To generate per-k reader result plots with retrieval results on the same axis, run: 
+To generate per-k reader result plots with retrieval results overlaid on top, run: 
 
 ```bash
-python reader/plot_per_k.py --eval_file {dataset}-{model_name}-None-shot{}-ndoc*-42-{cite-}{retriever}.json.score --ret_file {dataset}_retrieval-{retriever}.json --ret_metric {top-k accuracy/precision@k/recall@k}
+python reader/plot_per_k.py --eval_file {dataset}-{model_name}-None-shot{}-ndoc*-cite-{retriever}.json.score --ret_file {dataset}_retrieval-{retriever}.json --ret_metric {top-k accuracy/precision@k/recall@k}
 ```
 
 ## Disclaimer

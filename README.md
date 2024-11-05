@@ -189,6 +189,20 @@ To generate per-k reader result plots with retrieval results overlaid on top, ru
 python reader/plot_per_k.py --eval_file {dataset}-{model_name}-None-shot{}-ndoc*-cite-{retriever}.json.score --ret_file {dataset}_retrieval-{retriever}.json --ret_metric {top-k accuracy/precision@k/recall@k}
 ```
 
+## Additional code licenses
+Our repository has adapted some code from three different sources, all under the MIT License.
+
+The copyright associated with each source:
+* [ALCE](https://github.com/princeton-nlp/ALCE/): Copyright (c) 2023 Princeton Natural Language Processing
+* [RAGGED](https://github.com/neulab/ragged/): Copyright (c) Carnegie Mellon University
+* [ColBERT](https://github.com/stanford-futuredata/ColBERT/): Copyright (c) 2019, 2020 Stanford Future Data Systems
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
 ## Disclaimer
 This “research quality code” is provided by Intel “As Is” without any express 
 or implied warranty of any kind. Intel does not warrant or assume 

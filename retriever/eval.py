@@ -1,3 +1,6 @@
+# Some of this code is based on prior work under the MIT License:
+#   Copyright (c) 2023 Princeton Natural Language Processing
+
 import json
 import os 
 import warnings

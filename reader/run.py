@@ -1,3 +1,6 @@
+# Some of this code is based on prior work under the MIT License:
+#   Copyright (c) 2023 Princeton Natural Language Processing
+
 import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)

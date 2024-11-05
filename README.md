@@ -34,6 +34,24 @@ To calculate evaluation scores for LLM outputs, you will also need `rouge-score`
 
 ## Setup
 
+### Set Paths
+Before getting started, you must fill in the path variables `setup/set_paths.sh` for your environment
+
+```bash
+export DATA_PATH=  # directory containing all preprocessed eval files
+export INDEX_PATH=$DATA_PATH/indices  # directory to save indices for search/retrieval with SVS
+export VEC_PATH=$DATA_PATH/vectors  # path to document vectors for search/retrieval with SVS
+export DATASET_PATH=  # directory containing subdirectories (labelled with dataset name) containing raw downloaded data
+export RESULTS_PATH=  # location to save output from retriever and reader eval
+export COLBERT_MODEL_PATH=  # location where colbert model has been downloaded
+```
+
+then run with 
+
+```bash
+source setup/set_paths.sh
+```
+
 ### Download Data
 
 To download ASQA and QAMPARI datasets, as well as the DPR wikipedia snapshot used for retrieved documents, please refer to the original [ALCE repository](https://github.com/princeton-nlp/ALCE). After downloading this data, create `asqa`, `qampari`, and `dpr_wiki` subdirectories in the location specified by the `DATASET_PATH` environment variable. Place one (it doesn't matter which) corresponding .json eval file in the `asqa` and `qampari` directories, respectively. Rename these files `raw.json`. Rename the downloaded dpr wikipedia dump `raw.tsv` and place it in the `dpr_wiki` subdirectory. Rename the oracle files included in the ALCE data `asqa_gold.json` and `qampari_gold.json`. Move them to the location specified by the `DATA_PATH` environment variable. Finally, the renamed ALCE .json files and DPR wikipedia .tsv file can be converted to the formats needed for running retrieval with SVS (Scalable Vector Search) by running:
@@ -54,23 +72,8 @@ For the NQ dataset and the KILT Wikipedia corpus that supports it, you may follo
 
 To preprocess the files for use with our dense retrieval code using SVS, run `preprocessing/convert_nq_dense.py` with the appropriate input arguments.
 
-### Set Paths
-Before getting started, you must fill in the path variables `setup/set_paths.sh` for your environment
-
-```bash
-export DATA_PATH=  # directory containing all preprocessed eval files
-export INDEX_PATH=$DATA_PATH/indices  # directory to save indices for search/retrieval with SVS
-export VEC_PATH=$DATA_PATH/vectors  # path to document vectors for search/retrieval with SVS
-export DATASET_PATH=  # directory containing subdirectories (labelled with dataset name) containing raw downloaded data
-export RESULTS_PATH=  # location to save output from retriever and reader eval
-export COLBERT_MODEL_PATH=  # location where colbert model has been downloaded
-```
-
-then run with 
-
-```bash
-source setup/set_paths.sh
-```
+### Embed corpus text
+After you download the DPR Wikipedia and/or KILT Wikipedia dumps, you will need to embed the corpus samples into vectors. These form the vector database for the retriever. Code to embed JSON or HuggingFace datasets is available in the [VectorSearchDatasets repository](https://github.com/IntelLabs/VectorSearchDatasets/blob/main/text/wikipedia_dataset.py). Their [README](https://github.com/IntelLabs/VectorSearchDatasets/tree/main/text) has more detailed information on using device parallelism -- specifically, you should refer to the `wikipedia_110M` section to see an example with the KILT Wikipedia corpus.
 
 ## Retriever
 

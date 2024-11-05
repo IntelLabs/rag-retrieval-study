@@ -34,6 +34,24 @@ To calculate evaluation scores for LLM outputs, you will also need `rouge-score`
 
 ## Setup
 
+### Set Paths
+Before getting started, you must fill in the path variables `setup/set_paths.sh` for your environment
+
+```bash
+export DATA_PATH=  # directory containing all preprocessed eval files
+export INDEX_PATH=$DATA_PATH/indices  # directory to save indices for search/retrieval with SVS
+export VEC_PATH=$DATA_PATH/vectors  # path to document vectors for search/retrieval with SVS
+export DATASET_PATH=  # directory containing subdirectories (labelled with dataset name) containing raw downloaded data
+export RESULTS_PATH=  # location to save output from retriever and reader eval
+export COLBERT_MODEL_PATH=  # location where colbert model has been downloaded
+```
+
+then run with 
+
+```bash
+source setup/set_paths.sh
+```
+
 ### Download Data
 
 To download ASQA and QAMPARI datasets, as well as the DPR wikipedia snapshot used for retrieved documents, please refer to the original [ALCE repository](https://github.com/princeton-nlp/ALCE). After downloading this data, create `asqa`, `qampari`, and `dpr_wiki` subdirectories in the location specified by the `DATASET_PATH` environment variable. Place one (it doesn't matter which) corresponding .json eval file in the `asqa` and `qampari` directories, respectively. Rename these files `raw.json`. Rename the downloaded dpr wikipedia dump `raw.tsv` and place it in the `dpr_wiki` subdirectory. Rename the oracle files included in the ALCE data `asqa_gold.json` and `qampari_gold.json`. Move them to the location specified by the `DATA_PATH` environment variable. Finally, the renamed ALCE .json files and DPR wikipedia .tsv file can be converted to the formats needed for running retrieval with SVS (Scalable Vector Search) by running:
@@ -54,23 +72,8 @@ For the NQ dataset and the KILT Wikipedia corpus that supports it, you may follo
 
 To preprocess the files for use with our dense retrieval code using SVS, run `preprocessing/convert_nq_dense.py` with the appropriate input arguments.
 
-### Set Paths
-Before getting started, you must fill in the path variables `setup/set_paths.sh` for your environment
-
-```bash
-export DATA_PATH=  # directory containing all preprocessed eval files
-export INDEX_PATH=$DATA_PATH/indices  # directory to save indices for search/retrieval with SVS
-export VEC_PATH=$DATA_PATH/vectors  # path to document vectors for search/retrieval with SVS
-export DATASET_PATH=  # directory containing subdirectories (labelled with dataset name) containing raw downloaded data
-export RESULTS_PATH=  # location to save output from retriever and reader eval
-export COLBERT_MODEL_PATH=  # location where colbert model has been downloaded
-```
-
-then run with 
-
-```bash
-source setup/set_paths.sh
-```
+### Embed corpus text
+After you download the DPR Wikipedia and/or KILT Wikipedia dumps, you will need to embed the corpus samples into vectors. These form the vector database for the retriever. Code to embed JSON or HuggingFace datasets is available in the [VectorSearchDatasets repository](https://github.com/IntelLabs/VectorSearchDatasets/blob/main/text/wikipedia_dataset.py). Their [README](https://github.com/IntelLabs/VectorSearchDatasets/tree/main/text) has more detailed information on using device parallelism -- specifically, you should refer to the `wikipedia_110M` section to see an example with the KILT Wikipedia corpus.
 
 ## Retriever
 
@@ -88,13 +91,21 @@ Retrieval with dense text embeddings (e.g. the [BGE-1.5 embeddings](https://hugg
 
 Alternatively, you can make more system-specific install configurations by following the [documentation here](https://intel.github.io/ScalableVectorSearch/).
 
-We have implemented similarity-based retrieval with either exact search or approximate nearest neighbor (ANN) search. Retriever configuration files for exact search are titled `dense_{DATASET}.yaml`, while approximate search parameters can be set in configuration files titled `dense_ann_{DATASET}.yaml`. Several of the parameters for building the ANN search graph can be modified to alter the search performance, but we have provided configurations that work well for those datasets.
+We have implemented similarity-based retrieval with either exact search or approximate nearest neighbor (ANN) search. Retriever configuration files for exact search are titled `dense_{DATASET}.yaml`. Any arguments passed to the `retrieval/run.py` script will override the parameters set in the configuration YAML file.
 
-#### Tuning search recall
-For some experiments, we have tuned the ANN search to achieve a specific accuracy compared to exact search. Therefore we have included a `preprocessing/create_ground_truth_calibration.py` script to save the results of exact search on a subset of the data.
+#### Search recall experiments
+For the approximate search experiments, we tuned the ANN search to achieve a specific accuracy compared to exact search. This requires a file that saves the results of the exact search, which is done in `preprocessing/create_ground_truth_calibration.py` script to save the results on a subset of the data.
+
+Approximate search parameters can be set in configuration files titled `dense_ann_{DATASET}.yaml`. Several of the parameters for building the ANN search index can be modified to alter the search performance, but we have provided configurations that work well for those datasets. If you leave the `calib_kwargs` parameter as-is, then SVS will run a calibration routine to estimate the search window size that reaches the target recall. Here are example commands to run the calibration at all the target search recalls given in the paper for the ASQA dataset:
+
+```bash
+python retrieval/run.py --config dense_ann_asqa.yaml --calib_kwargs '{"calib_prefix": asqa_bge-base-dense, "num_neighbors": 10, "target_recall": 0.7}'
+python retrieval/run.py --config dense_ann_asqa.yaml --calib_kwargs '{"calib_prefix": asqa_bge-base-dense, "num_neighbors": 10, "target_recall": 0.9}'
+python retrieval/run.py --config dense_ann_asqa.yaml --calib_kwargs '{"calib_prefix": asqa_bge-base-dense, "num_neighbors": 10, "target_recall": 0.95}'
+``` 
 
 #### Setting gold document recall
-For some experiments, we manipulated the set of context documents to achieve an exact number for average retrieval recall across the whole dataset of queries. This can be run with `preprocessing/set_gold_recall.py`.
+For some experiments, we manipulated the set of context documents to achieve an exact number for average retrieval recall across the whole dataset of queries. This can be run with `preprocessing/set_gold_recall.py`. The output will be a JSON file that you can pass into the reader LLM (see below).
 
 ### ColBERT-2.0 retriever -- very slight modifications from v.0.2.20
 The faiss package is required to run the ColBERT retriever.
@@ -106,10 +117,11 @@ Details on these changes: We ran into OOM errors when using the original code. T
 ### Retriever evaluation
 To evaluate retrieval results use the following command:
 ```bash
-python retriever/eval.py --eval_file {eval_filename} --not_par_level
+python retriever/eval_per_query.py --eval_file {eval_filename} --not_par_level
 ```
-
 Use the ```--not_par_level``` flag for asqa, where the gold metadata is not separated into document-level and paragraph-level ids.
+
+To get 95% bootstrap confidence intervals on the retrieval results, use the ```--ci``` flag.
 
 To generate 10 noisy docs in each percentile of neighbors for each query, add the ```--noise_experiment``` tag. Note that this is only implemented for dense retrieval and has only been tested for asqa. 
 
@@ -124,10 +136,16 @@ python reader/run.py --config {config_name}
 
 Bash files for looping over various numbers of documents included in the prompt and evaluating the results can be found in `runners/ndoc_asqa_mistral_reader.sh` and `runners/ndoc_asqa_mistral_eval_looper.sh`. 
 
+### Search recall experiments
+Bash files for looping over the calibrated search recall results and the datasets shown in the paper can be found in `runners/search-recall_reader.sh` and `runners/search-recall_eval.sh`.
+
+### Gold document recall experiments
+Bash files for looping over the gold document recall retriever files and the datasets shown in the paper can be found in `runners/gold-recall_reader.sh` and `runners/gold-recall_eval.sh`.
+
 ### Noise experiments
 The process for performing experiments with adding noisy documents to gold and retrieved documents in the interest of replicating performance gains observed in [The Power of Noise](https://arxiv.org/abs/2401.14887) is outlined here. 
 
-## Noise percentile experiments
+### Noise percentile experiments
 Using the ```--noise_experiment``` tag in the retrieval step described in [Retriever evaluation](#retriever-evaluation) results in 10 noisy docs in each percentile of neighbors for each query. This is obtained by retrieving all documents for the query, resulting in an ordered list from most similar to least similar to the query. This is divided into ten equal bins. Random documents from each bin are exported to a noise file. This is implemented in `retriever/ret_utils.py`. For each resulting noise file, run:
 
 ```bash
@@ -137,8 +155,7 @@ By default, the noisy documents will be added to the prompt after the retrieved 
 
 Bash files for running and evaluating this experiment can be found at `runners/noise_percentile_asqa_mistral_gold_reader.sh` and `runners/noise_percentile_asqa_mistral_gold_eval.sh`. 
 
-
-## First 100 neighbors experiments
+### First 100 neighbors experiments
 To perform experiments with adding nearer neighbors to the gold and retrieved results run default retrieval to obtain an `eval_file`, then create new noise files for retrieved results 5-10 and 95-100 (for each query) by running: 
 
 ```bash
@@ -155,24 +172,21 @@ Bash files for running and evaluating this experiment can be found at `runners/f
 
 ### Reader evaluation
 
-Accuracy on the QA task is implemented in run/eval.py. The evaluation code contains copies of functions from two RAG papers that previously used these datasets ([ALCE](https://github.com/princeton-nlp/ALCE) and [RAGGED](https://github.com/neulab/ragged)).
+We have two ways to run evaluation on the reader results. The `eval.py` script provides the overall mean, whereas the `eval_per_query.py` script provides the information needed to compute the confidence intervals (CIs) across dataset queries. The evaluation code contains copies of functions from two RAG papers that previously used these datasets ([ALCE](https://github.com/princeton-nlp/ALCE) and [RAGGED](https://github.com/neulab/ragged)).
 
-For ASQA and QAMPARI, use the following command
+The following command should run the evaluation:
 ```bash
-python reader/eval.py --f {result_file_name} --citations
+python reader/eval_per_query.py --f {result_file_name} --citations
 ```
 
-For nq and bioasq, use the following command. Note that an option to run this eval without bert is offered because it can be somewhat time consuming. 
-```bash
-python reader/eval.py --f {result_file_name} --citations --no_bert
-```
+The evaluation result will be saved in the RESULTS_PATH (default is `result/`), with the same name as the input and a suffix `.score`.
 
-The evaluation result will be saved in `result/`, with the same name as the input and a suffix `.score`.
+To compute 95% bootstrap confidence intervals on the reader evaluation results, you can use the `reader/compute_ci.py` script. The various input arguments are used to find the correct ```*perquery.score``` files in the results folder.
 
-To generate per-k reader result plots with retrieval results on the same axis, run: 
+To generate per-k reader result plots with retrieval results overlaid on top, run: 
 
 ```bash
-python reader/plot_per_k.py --eval_file {dataset}-{model_name}-None-shot{}-ndoc*-42-{cite-}{retriever}.json.score --ret_file {dataset}_retrieval-{retriever}.json --ret_metric {top-k accuracy/precision@k/recall@k}
+python reader/plot_per_k.py --eval_file {dataset}-{model_name}-None-shot{}-ndoc*-cite-{retriever}.json.score --ret_file {dataset}_retrieval-{retriever}.json --ret_metric {top-k accuracy/precision@k/recall@k}
 ```
 
 ## Disclaimer

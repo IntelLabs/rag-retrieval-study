@@ -19,10 +19,14 @@ def bootstrap_ci(data, key_prefix, func=np.mean, n_boot=1000, percentiles=[2.5, 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--datasets", nargs='+', default=['asqa', 'nq']) 
-    parser.add_argument("-f", "--subfolder", type=str, default=None) 
-    parser.add_argument("-m", "--models", nargs='+', default=['Llama', 'Mistral'])
-    parser.add_argument("-c", "--conditions", nargs='+', default=['gold', 'closedbook', 'bge-base', 'colbert'])
+    parser.add_argument("-d", "--datasets", nargs='+', default=['asqa', 'nq'],
+                        help="Dataset(s) in the score filename") 
+    parser.add_argument("-f", "--subfolder", type=str, default=None,
+                        help="Searches in a subfolder in the RESULTS_PATH") 
+    parser.add_argument("-m", "--models", nargs='+', default=['Llama', 'Mistral'],
+                        help="Model(s) in the score filename")
+    parser.add_argument("-c", "--conditions", nargs='+', default=['gold', 'closedbook', 'bge-base', 'colbert'],
+                        help="Condition(s) in the score filename")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
 

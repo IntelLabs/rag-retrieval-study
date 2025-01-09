@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 # Some of this code is based on prior work under the MIT License:
 #   Copyright (c) 2023 Princeton Natural Language Processing
 #   Copyright (c) Carnegie Mellon University 

@@ -1,3 +1,6 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
 from file_utils import load_json, save_json, save_jsonl
 import convert_alce_utils
 

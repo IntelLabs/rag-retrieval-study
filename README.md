@@ -1,7 +1,7 @@
 # Toward Optimal Search and Retrieval for RAG
 This is a research code repository associated with the paper "Toward Optimal Search and Retrieval for RAG."
 
-![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/GitHub.com/IntelLabs/rag-retrieval-study)
+![OpenSSF Scorecard](https://img.shields.io/ossf-scorecard/github.com/IntelLabs/rag-retrieval-study)
 ![GitHub License](https://img.shields.io/github/license/IntelLabs/rag-retrieval-study)
 ![python-support](https://img.shields.io/badge/Python-3.12-3?logo=python)
 
